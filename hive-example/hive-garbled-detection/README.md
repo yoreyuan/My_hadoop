@@ -41,8 +41,8 @@ mysql> select * from FUNCS;
 --返回乱码的记录，并限制返回的条数,is_garbled()括号中也可以指定需要检测的特定字段
 select * from garbled_t where is_garbled(*)=true limit 3;
 
---统计乱码行记录占总数据的比值
-select ratio_garbled(*) from garbled_t;
+--统计乱码行记录占总数据的比值，不支持* 模糊匹配
+select ratio_garbled(name, desc) from garbled_t;
 
 ```
 
