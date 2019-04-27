@@ -44,6 +44,7 @@ public class Util {
             char[] ch = temp.trim().toCharArray();
             for(char c: ch){
                 if (!Character.isLetterOrDigit(c)) {
+                    if(isWord(c))continue;
                     String strCh = "" + c;
                     if (!strCh.matches("[\u4e00-\u9fa5]+")) {
                         return true;

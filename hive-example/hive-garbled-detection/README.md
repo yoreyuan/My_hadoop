@@ -8,53 +8,11 @@ Hive乱码检测分析
 ## 1.2 打包自定义函数代码
 将打包好的jar上传到服务器上，hive-garbled-detection-1.0-SNAPSHOT-jar-with-dependencies.jar
 
-## 1.3 添加到 hive 中
-以下操作进入Hive CLI操作  
-
-1. 添加自定义jar包： `add jar /root/hive-garbled-detection-1.0-SNAPSHOT-jar-with-dependencies.jar;`
-2. 查看添加的jar包： `list jar;`
-3. 创建自定义的函数: 
-```sql
---创建临时函数(临时函数仅对当前session有效)
-create temporary function is_garbled as 'yore.IsGarbled';
-create temporary function ratio_garbled as 'yore.RatioGarbled';
-
---创建永久函数（对全局永久有效）
-create function is_garbled as 'yore.IsGarbled' USING JAR 'hdfs://cdh1:8082/自定义函数jar包路径';
-
+```
+hadoop fs -put hive-garbled-detection-1.0-SNAPSHOT-jar-with-dependencies.jar /tmp/
 ```
 
-## 1.4 查看自定义的函数
-```bash
-hive>  show functions;
-```
-
-如果注册的是永久函数，可以在hive源数据信息表中的查看
-```
-mysql> show tables;
-mysql> select * from FUNCS;
-
-```
-
-## 1.5 使用
-```sql
---返回乱码的记录，并限制返回的条数,is_garbled()括号中也可以指定需要检测的特定字段
-select * from garbled_t where is_garbled(*)=true limit 3;
-
---统计乱码行记录占总数据的比值，不支持* 模糊匹配
-select ratio_garbled(name, desc) from garbled_t;
-
-```
-
-## 1.6 删除自定义函数
-```sql
---删除自定义临时函数
-DROP TEMPORARY FUNCTION is_garbled;
-DROP TEMPORARY FUNCTION ratio_garbled;
-```
-
-
-## 1.7 测试
+## 1.3 添加测试数据
 测试数据准备 garbled_test.txt
 ```
 原始数据：
@@ -86,9 +44,13 @@ DROP TEMPORARY FUNCTION ratio_garbled;
 10	ĺ®˘ć·10	65	丁香一样的颜色
 11	客户11	28	丁香一样的芬芳
 12	客户13	17	丁香一样的忧愁
+31	A004	3.33	youchang
+32	B005	91	youjiliaodeyuxiang
+33	C006	33	woxiwangfengzhe
 
 ```
 
+## 1.4 在 hive 中创建表，并将数据加载进表中
 ```sql
 create table garbled_t(
     id int,
@@ -97,19 +59,98 @@ create table garbled_t(
     desc string
 ) row format delimited fields terminated by '\t';
 
-
 load data local inpath '/root/hdfs_data/garbled_test.txt' overwrite into table garbled_t;
 
 select * from garbled_t;
 
 ```
 
-## 1.8 自定义 Hive 函数执行结果
+## 1.5 将自定义的函数jar包添加到 hive 环境中
+在 hive CLI 中执行如下
+```sql
+--添加自定义jar包：
+hive> add jar hdfs:/tmp/hive-garbled-detection-1.0-SNAPSHOT-jar-with-dependencies.jar;
+
+--查看添加的jar包：
+hive> list jar;
+
+```
+
+## 1.6 创建自定义函数
+本次以创建临时函数为例
+```sql
+--创建临时函数(临时函数仅对当前session有效)
+hive> create temporary function is_garbled as 'yore.IsGarbled';
+hive> create temporary function ratio_garbled as 'yore.RatioGarbled';
+
+hive> create temporary function is_chinese as 'Iyore.IsChinese';
+```
+
+如果需要创建永久函数请参照如下 HQL  
+```sql
+--创建永久函数（对全局永久有效）
+hive> create function is_chinese as 'yore.IsChinese' JAR 'hdfs:/tmp/hive-garbled-detection-1.0-SNAPSHOT-jar-with-dependencies.jar';
+```
+
+
+## 1.7 查看自定义的函数
+```sql
+hive>  show functions;
+```
+
+如果注册的是永久函数，可以在hive源数据信息表中的查看
+```
+mysql> show tables;
+mysql> select * from FUNCS;
+
+```
+
+## 1.8 使用
+```sql
+--返回乱码的记录，并限制返回的条数,is_garbled()括号中也可以指定需要检测的特定字段
+select * from garbled_t where is_garbled(*) limit 3;
+
+--返回含有中文的记录
+select * from garbled_t where is_chinese(*) ;
+select * from garbled_t where regexp('[^\\u4e00-\\u9fa5\\w\\s]+') ;
+
+--返回中文记录中存在乱码的记录
+select * from (select * from garbled_t where is_chinese(*)) 
+where is_garbled(*);
+
+
+--统计乱码行记录占总数据的比值，不支持* 模糊匹配
+select ratio_garbled(name, desc) from garbled_t;
+
+```
+
+
+## 1.9 删除自定义函数
+```sql
+--删除自定义临时函数
+DROP TEMPORARY FUNCTION is_garbled;
+DROP TEMPORARY FUNCTION ratio_garbled;
+```
+
+
+
+## 1.10 自定义 Hive 函数执行结果
 
 自定义函数 is_garbled(参数)说明：* 对查询表的所有字段数据进行分析；还可以指定某些字段 `is_garbled(name, desc)`
 ![执行自定义乱码检测的 UDF 函数的返回结果](src/main/resources/is_garbled_result.png)
 
 
+
+# 二、Hive JDBC 方式对乱码进行分析
+
+## 2.1 概述
+本部分骨架及流程和部分核心代码已实现，未完成部分可以根据流程继续完善。
+  
+## 2.2 代码
+详细代码可查看 [GarbledAnalyzeByHiveJdbc.java](src\main\java\yore\jdbc\GarbledAnalyzeByHiveJdbc.java)
+
+## 2.3 使用
+使用可查看代码主函数入口的注释部分
 
   
     

@@ -19,7 +19,6 @@ import java.util.concurrent.LinkedBlockingQueue;
  * 通过 Hive JDBC 方式分析数据中的乱码信息
  *
  *
- *
  * Created by yore on 2019-04-25 10:36
  */
 public class GarbledAnalyzeByHiveJdbc {
@@ -30,6 +29,7 @@ public class GarbledAnalyzeByHiveJdbc {
     private static String user = PropertiesUtil.getPropString("hive.thrift.user");
     private static String password = PropertiesUtil.getPropString("hive.thrift.password");
     private static int limitNum = PropertiesUtil.getPropInt("result.limit.num");
+    private static String outputDir = PropertiesUtil.getPropString("result.out.path");
 
 
     /**
@@ -38,17 +38,17 @@ public class GarbledAnalyzeByHiveJdbc {
     public static void main(String[] args) throws IOException {
         System.out.println(
                 "--------------------------------\n" +
-                " 运行jar包前请配置好项目中 my.properties中的参数！\n" +
-                " 如果未指定任何参数，程序将以配置文件中的配置参数为准进行分析，分析当前库下的所有表中未字符串类型(string、varchar)的字段值是否存在乱码。\n" +
-                " 如果指定参数，本程序支持如下参数：\n" +
-                "\t -u \t\t 连接 Hive 的用户名。可选，如果未指定，以配置文件为准。\n" +
-                "\t -p \t\t 连接 Hive 的密码。如果未指定，以配置文件为准。\n" +
-                "\t -url \t\t 连接 Hive 的ip。例如：jdbc:hive2://hive_ip:10000/库名 。如果未指定，以配置文件为准，如果未配置默认连接 jdbc:hive2://localhost:10000/default\n\n" +
+                        " 运行jar包前请配置好项目中 my.properties中的参数！\n" +
+                        " 如果未指定任何参数，程序将以配置文件中的配置参数为准进行分析，分析当前库下的所有表中未字符串类型(string、varchar)的字段值是否存在乱码。\n" +
+                        " 如果指定参数，本程序支持如下参数：\n" +
+                        "\t -u \t\t 连接 Hive 的用户名。可选，如果未指定，以配置文件为准。\n" +
+                        "\t -p \t\t 连接 Hive 的密码。如果未指定，以配置文件为准。\n" +
+                        "\t -url \t\t 连接 Hive 的ip。例如：jdbc:hive2://hive_ip:10000/库名 。如果未指定，以配置文件为准，如果未配置默认连接 jdbc:hive2://localhost:10000/default\n\n" +
 
-                "\t -tables \t\t 可选。明确指定某一表名，多表时请用英文逗号分隔，如：id,name。不指定将分析url指定库的所有表。\n" +
-                "\t -limit \t\t 限制最终分析结果的输出的条数，如：类似于 SQL 中的 limit n。不指定则以配置文件我准，如果没有默认为10 \n" +
-                "\t -fields \t\t 可选。指定对应表需要分析的字段值，不同表之间用英文分号分割，如：id,name;id,desc,name。如果不指定将分析指定表的字符串类型的字段。\n" +
-                "--------------------------------\n"
+                        "\t -tables \t\t 可选。明确指定某一表名，多表时请用英文逗号分隔，如：id,name。不指定将分析url指定库的所有表。\n" +
+                        "\t -limit \t\t 限制最终分析结果的输出的条数，如：类似于 SQL 中的 limit n。不指定则以配置文件我准，如果没有默认为10 \n" +
+                        "\t -fields \t\t 可选。指定对应表需要分析的字段值，不同表之间用英文分号分割，如：id,name;id,desc,name。如果不指定将分析指定表的字符串类型的字段。\n" +
+                        "--------------------------------\n"
         );
 
         List<String> hintTableName = new ArrayList<>();
@@ -62,23 +62,39 @@ public class GarbledAnalyzeByHiveJdbc {
         System.out.println(hintTableName);
         System.out.println(hintField);
 
-        String outputPath = "/Users/yoreyuan/Downloads/" + "hive_" + user + "_garbled_analyze_result.md";
+        String outputPath = outputDir + "hive_" + user + "_garbled_analyze_result.md";
         System.out.println(outputPath);
         OutputStreamWriter out = Util.getOutPutStreamWriter(outputPath);
-
-        // TODO
-//        executeTableGarbled();
-        // 1.
+        out.write("Hive 数据乱码分析 \n====\n\n");
 
         /**
-         * 一、分析表名是否存在乱码
-         *      1.1 指定的表分析
-         *      1.2 未指定时的分析
+         * 1、分析表名是否存在乱码
+         */
+        String dbName = url.substring(url.lastIndexOf("/")+1);
+        out.write("# 1. "+dbName+"库中表名乱码分析\n");
+        executeTableGarbled(hintTableName, out);
+
+        /**
+         * TODO 2. 分析表中的乱码情况
+         * TODO      2.1 当指定表的时候
+         * TODO          2.1.1 当指定字段时
+         * TODO          2.1.2 当未指定字段时
+         * TODO              2.1.2.1 获取表的元数据信息，表中字符串类型（string、varchar）的字段
+         * TODO              2.1.2.2 判断该字段中是否存在中文乱码
+         * TODO              2.1.2.3 如果有输出文件中，输出 limit 条
+         * TODO
+         * TODO      2.2 当未指定表的时候，分析库中所有表
+         * TODO          2.2.1 获取表的元数据信息，表中字符串类型（string、varchar）的字段
+         * TODO          2.2.2 判断该字段中是否存在中文乱码
+         * TODO          2.2.3 如果有输出文件中，输出 limit 条
          */
 
 
+        /**
+         * TODO 3. 汇总每个表的乱码统计信息
+         */
 
-
+//        executeTableGarbled();
 
         out.close();
     }
@@ -150,10 +166,54 @@ public class GarbledAnalyzeByHiveJdbc {
         }
     }
 
+    private static void executeTableGarbled(List<String> hintTableName, OutputStreamWriter out){
+        try {
+            StringBuffer sb = new StringBuffer();
+            sb.append("需分析的表：");
+            for(String htn : hintTableName){
+                sb.append(htn + "、");
+            }
+            out.write(sb.toString().substring(0, sb.length()-1) + "    \n");
+            out.flush();
+
+            out.write("库中表列表如下：");
+            String sql = "show tables";
+            Connection conn = HiveJdbcUtil.getConnection();
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ResultSet result = ps.executeQuery();
+
+            sb = new StringBuffer();
+            List<String> gTableName = new ArrayList<>();
+            while (result.next()){
+                String tableName = result.getString(1);
+                sb.append(tableName + "、");
+                if(Util.isMessyCode(tableName)){
+                    gTableName.add(tableName);
+                }
+
+            }
+            out.write(sb.substring(0, sb.length()-1) + "   \n");
+            out.flush();
+
+            if(gTableName.isEmpty()){
+                out.write("表名没有乱码  \n");
+            }else{
+                out.write("乱码的表为：");
+                sb = new StringBuffer();
+                for(String g1:gTableName){
+                    sb.append(g1);
+                }
+                out.write(sb.substring(0, sb.length()-1) + "   \n\n\n");
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+    }
+
     private static void executeTableGarbled(){
+
         String sql = "show tables";
         Connection conn = HiveJdbcUtil.getConnection();
-
 
         try {
             PreparedStatement ps = conn.prepareStatement(sql);
@@ -166,7 +226,7 @@ public class GarbledAnalyzeByHiveJdbc {
                 // 获取该表元数据信息 -- 字段中是 string 类型的列名
                 List<String> stringFieldNameList = getTableMateDate(tableName);
 
-                //TODO 对字符串类型的数据分析
+                // 对字符串类型的数据分析
                 executeTableLineGarbled(tableName, stringFieldNameList);
             }
 
@@ -297,19 +357,6 @@ public class GarbledAnalyzeByHiveJdbc {
             }
         }
 
-
-
-        public static void main(String[] args) throws Exception{
-            Connection conn2 = getConnection();
-            ResultSet r = conn2.prepareStatement("show tables").executeQuery();
-
-            while (r.next()){
-                System.out.println(r.getString(1));
-            }
-
-        }
     }
-
-
 
 }
