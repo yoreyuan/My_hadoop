@@ -11,6 +11,7 @@
     <modules>
         <module>hive-example/hive-user-defined-separator</module>
         <module>hive-example/hive-garbled-detection</module>
+        <module>kudu-example/kudu_demo</module>
     </modules>
 
 

@@ -142,6 +142,12 @@ TBLPROPERTIES(
   'kudu.table_name' = 'collectl_metrics'
 );
 
+CREATE EXTERNAL TABLE collectl_metric_ids
+STORED AS KUDU
+TBLPROPERTIES(
+  'kudu.table_name' = 'collectl_metric_ids'
+);
+
 --查看创建的表
 [cdh3:21000] > desc collectl_metrics;
 Query: describe collectl_metrics
@@ -154,6 +160,16 @@ Query: describe collectl_metrics
 | value     | double |         | false       | false    |               | BIT_SHUFFLE   | DEFAULT_COMPRESSION | 0          |
 +-----------+--------+---------+-------------+----------+---------------+---------------+---------------------+------------+
 Fetched 4 row(s) in 5.29s
+
+[cdh3:21000] > desc collectl_metric_ids;
+Query: describe collectl_metric_ids
++--------+--------+---------+-------------+----------+---------------+---------------+---------------------+------------+
+| name   | type   | comment | primary_key | nullable | default_value | encoding      | compression         | block_size |
++--------+--------+---------+-------------+----------+---------------+---------------+---------------------+------------+
+| host   | string |         | true        | false    |               | AUTO_ENCODING | DEFAULT_COMPRESSION | 0          |
+| metric | string |         | true        | false    |               | AUTO_ENCODING | DEFAULT_COMPRESSION | 0          |
++--------+--------+---------+-------------+----------+---------------+---------------+---------------------+------------+
+Fetched 2 row(s) in 0.01s
 
 --查看表中统计信息
 [cdh3:21000] > select count(distinct metric) from collectl_metrics;
@@ -169,18 +185,186 @@ Fetched 1 row(s) in 2.08s
 
 ```
 
+## insert-loadgen
+随机插入负载生成器。这将使用 `AUTO_BACKGROUND_FLUSH`模式尽可能快地插入到预先存在的表中。
+所有字段都是随机的。负载生成器将继续插入，直到它停止或遇到错误。此负载生成器是单线程的。
+
+### 现在 Impala-shell 创建kudu测试表
+该程序不会创建“loadgen_test”表。需要通过其他方式创建表，例如通过impala-shell。
+```sql
+--这里通过impala-shell创建的表，在代码中应写全名称：impala::kudu_test.loadgen_test
+CREATE TABLE kudu_test.loadgen_test(
+    id INT,
+    name STRING,
+    password STRING,
+    PRIMARY KEY(id)
+)
+PARTITION BY HASH PARTITIONS 3
+STORED AS KUDU;
+
+--修改字段名：alter  table loadgen_test change age  password string;
+
+[cdh3:21000] > desc loadgen_test;
+Query: describe loadgen_test
++----------+--------+---------+-------------+----------+---------------+---------------+---------------------+------------+
+| name     | type   | comment | primary_key | nullable | default_value | encoding      | compression         | block_size |
++----------+--------+---------+-------------+----------+---------------+---------------+---------------------+------------+
+| id       | int    |         | true        | false    |               | AUTO_ENCODING | DEFAULT_COMPRESSION | 0          |
+| name     | string |         | false       | true     |               | AUTO_ENCODING | DEFAULT_COMPRESSION | 0          |
+| password | string |         | false       | true     |               | AUTO_ENCODING | DEFAULT_COMPRESSION | 0          |
++----------+--------+---------+-------------+----------+---------------+---------------+---------------------+------------+
+Fetched 3 row(s) in 0.01s
+
+--查询插入的数据
+[cdh3:21000] > select * from loadgen_test limit 5;
+Query: select * from loadgen_test limit 5
+Query submitted at: 2019-04-29 18:03:12 (Coordinator: http://cdh3:25000)
+Query progress can be monitored at: http://cdh3:25000/query_plan?query_id=f045af6d56427126:8b184e8f00000000
++--------+--------------------------------------+--------------------------------------+
+| id     | name                                 | password                             |
++--------+--------------------------------------+--------------------------------------+
+| 118831 | ffc8f3a4-7274-44c4-a3ec-01fda5c9528a | ec502177-8f64-4698-958a-e22ae26f8fd7 |
+| 148400 | 45dd6c75-1a7f-4f72-9082-1cce10d13e61 | 511cb05e-5021-4f62-81bc-e068d39983b0 |
+| 183015 | 406e8a0e-3c67-4698-9ac7-e98a969a8709 | ce24cf04-f03f-4dd4-b012-264b2c44a12a |
+| 233081 | 45e5917d-d4d3-4117-9a9f-55ca5a3c4796 | 9ab7c492-70e8-4fb8-a35c-7125b22981af |
+| 276233 | d25a65ee-d2c1-44f9-b399-c8361bfffb88 | a298bc65-6c8e-4e8a-8dfc-40c4d8663143 |
++--------+--------------------------------------+--------------------------------------+
+Fetched 5 row(s) in 0.13s
+
+```
+
+### 运行
+```
+# master_addresses 为 Kudu 的master地址。 table_name是预先存在的表名。
+java -jar target xxx.jar master_addresses table_name
+```
+例如：`java -jar target xxx.jar cdh3:7051 impala::kudu_test.loadgen_test`
+
+
+## java-example
+使用同步 Kudu 客户端的简单实例
+ - 创建一个表
+ - 插入行
+ - 修改一个表
+ - 扫描行
+ - 删除表格
 
 
 
+### 运行
+```
+$ mvn package
+$ java -jar target/kudu-java-example-1.0-SNAPSHOT.jar
+```
 
+运行参数说明：  
+可以为 kudu 指定一组不同的主服务器，只需将属性 kuduMaster设置为 csv 格式的主机地址，如： host:port  
+```
+java -DkuduMasters=master-0:7051,master-1:7051,master-2:7051 -jar target/kudu-java-example-1.0-SNAPSHOT.jar
+```
 
+### 创建示例表
+运行 `Example.createExampleTable(client, tableName)`，
 
+#### 查看表
+可以用一下两种方式查看创建的表：
+1. kudu  
+`kudu table list cdh3:7051`  
 
+2. impala-shell  
+可以打开 `Kudu UI`，查看创建的表信息。浏览器打开 `kudu-master-ip:8051` ， 点击 `Tables` ,可以看到刚才创建的表 `java_example-时间戳`，  
+点击打开，查看详细信息。这里已经有 impala shell 查看表的语句了，直接打开 `impala-shell` 输入如下语句
 
+```sql
+[cdh3:21000] > CREATE EXTERNAL TABLE java_example_1556593492110
+             > STORED AS KUDU
+             > TBLPROPERTIES(
+             >     'kudu.table_name' = 'java_example_1556593492110',
+             >     'kudu.master_addresses' = 'cdh3:7051'
+             > );
+Query: CREATE EXTERNAL TABLE java_example_1556593492110
+STORED AS KUDU
+TBLPROPERTIES(
+    'kudu.table_name' = 'java_example_1556593492110',
+    'kudu.master_addresses' = 'cdh3:7051'
+)
+Fetched 0 row(s) in 1.22s
+``` 
+![java_example-timestamp-detail](kudu_demo/src/main/resources/java_example-timestamp-detail.png)
 
+### 插入数据
+运行 `Example.insertRows(client, "java_example_1556593492110", 33);`
 
+#### 查看数据
+```sql
+[cdh3:21000] > select * from java_example_1556593492110;
+Query: select * from java_example_1556593492110
+Query submitted at: 2019-04-30 11:42:20 (Coordinator: http://cdh3:25000)
+Query progress can be monitored at: http://cdh3:25000/query_plan?query_id=4e490d235f4b8876:1190259500000000
++-----+----------+
+| key | value    |
++-----+----------+
+| 12  | NULL     |
+| 14  | NULL     |
+| 30  | NULL     |
+| 8   | NULL     |
+| 9   | value 9  |
+| 22  | NULL     |
+| 25  | value 25 |
+| 32  | NULL     |
+| 11  | value 11 |
+| 5   | value 5  |
+| 7   | value 7  |
+| 6   | NULL     |
+| 1   | value 1  |
+| 2   | NULL     |
+| 16  | NULL     |
+| 17  | value 17 |
+| 21  | value 21 |
+| 31  | value 31 |
+| 15  | value 15 |
+| 18  | NULL     |
+| 23  | value 23 |
+| 24  | NULL     |
+| 27  | value 27 |
+| 28  | NULL     |
+| 13  | value 13 |
+| 19  | value 19 |
+| 3   | value 3  |
+| 10  | NULL     |
+| 4   | NULL     |
+| 20  | NULL     |
+| 26  | NULL     |
+| 29  | value 29 |
+| 0   | NULL     |
++-----+----------+
+Fetched 33 row(s) in 0.13s
+```
 
+### 修改表（添加一列）
+例如在 `java_example_1556593492110` 表中添加一列 `added` ，并赋予默认值。
+```
+AlterTableOptions ato = new AlterTableOptions();
+ato.addColumn("added", org.apache.kudu.Type.DOUBLE, DEFAULT_DOUBLE);
+client.alterTable("java_example_1556593492110", ato);
+System.out.println("Altered the table");
+```
 
+**如果是在 impala-shell 需要重新映射外部Kudu表**
+```sql
+[cdh3:21000] > ALTER TABLE java_example_1556593492110
+             > SET TBLPROPERTIES('kudu.table_name' = 'java_example_1556593492110');
+Query: ALTER TABLE java_example_1556593492110
+SET TBLPROPERTIES('kudu.table_name' = 'java_example_1556593492110')
++----------------+
+| summary        |
++----------------+
+| Updated table. |
++----------------+
+Fetched 1 row(s) in 1.80s
+```
 
+### 扫描数据
+运行 `Example.scanTableAndCheckResults(client,"java_example_1556593492110", 33);`
 
 
