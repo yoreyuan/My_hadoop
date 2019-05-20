@@ -240,11 +240,12 @@ cp presto/presto-server-rpm/src/main/resources/dist/config/node.properties /opt/
 配置文件 `presto-server-0.219/etc`  的文件目录结构如下
 ```
 -etc
---catalog
+--catalog(文件夹)
 ---hive.properties
 ---jmx.properties
 ---memory.properties
 ---mysql.properties
+--kafka(文件夹)
 --config.properties
 --jvm.config
 --log.properties
@@ -384,7 +385,60 @@ connection-password=swarm
 ```
 
 2. Kafka配置
-...
+[Kafka Connector官方文档](https://prestodb.github.io/docs/current/connector/kafka.html)
+
+连接器允许将Apache Kafka主题用作Presto中的表。每条消息在Presto中显示为一行。**支持Apache Kafka 0.8+，但强烈建议使用0.8.1或更高版本。**
+
+在 `etc/catalog/` 下新建配置文件`kafka.properties`，如下配置
+```bash
+connector.name=kafka
+kafka.default-schema=default
+kafka.table-names=canal,spin,spout
+kafka.nodes=cdh1:9092,cdh2:9092,cdh3:9092
+# d(天)、h(小时)、m(分钟)、s(秒)、ms(毫秒)、us(微秒)、ns(纳秒)、
+kafka.connect-timeout=10s
+# B(字节)、KB(千字节)、MB(兆字节)、GB(吉字节)、TB(太字节)、PB(拍字节)、
+#kafka.buffer-size=64kb
+
+```
+
+
+3. Kudu配置
+在 `etc/catalog/` 下新建配置文件`kudu.properties`，如下配置
+```bash
+connector.name=kudu
+
+## List of Kudu master addresses, at least one is needed (comma separated)
+## Supported formats: example.com, example.com:7051, 192.0.2.1, 192.0.2.1:7051,
+##                    [2001:db8::1], [2001:db8::1]:7051, 2001:db8::1
+kudu.client.master-addresses=cdh3:7051
+
+## Kudu does not support schemas, but the connector can emulate them optionally.
+## By default, this feature is disabled, and all tables belong to the default schema.
+## For more details see connector documentation.
+#kudu.schema-emulation.enabled=false
+
+## Prefix to use for schema emulation (only relevant if `kudu.schema-emulation.enabled=true`)
+## The standard prefix is `presto::`. Empty prefix is also supported.
+## For more details see connector documentation.
+#kudu.schema-emulation.prefix=
+
+#######################
+### Advanced Kudu Java client configuration
+#######################
+
+## Default timeout used for administrative operations (e.g. createTable, deleteTable, etc.)
+kudu.client.default-admin-operation-timeout = 30s
+
+## Default timeout used for user operations
+kudu.client.default-operation-timeout = 30s
+
+## Default timeout to use when waiting on data from a socket
+kudu.client.default-socket-read-timeout = 10s
+
+## Disable Kudu client's collection of statistics.
+#kudu.client.disable-statistics = false
+```
 
 
 ### 2.3.4 启动和停止服务
@@ -424,9 +478,16 @@ chmod 755 presto-cli-0.219-executable.jar
 bin/presto-cli-0.219-executable.jar --help
 ```
 
-#### 2. 启动 PResto CLI
+#### 2. 启动 Presto CLI
 ```bash
+# Hive
 bin/presto-cli-0.219-executable.jar --server cdh6:8080 --catalog hive --schema default
+# Mysql
+bin/presto-cli-0.219-executable.jar --server cdh6:8080 --catalog mysql --schema 库名
+# Kafka
+./presto-cli-0.219-executable.jar --server cdh6:8080 --catalog kafka --schema default
+# Kudu
+./presto-cli-0.219-executable.jar --server cdh6:8080 --catalog kudu --schema default
 ```
 
 在hvie中 default 库下执行如下查询
@@ -470,6 +531,31 @@ Splits: 18 total, 18 done (100.00%)
 0:01 [6 rows, 318B] [6 rows/s, 318B/s]
 ```
 
+查询Kafka的数据
+```sql
+presto:default> select _partition_id,_partition_offset,_segment_count,_key,_message from canal limit 3;
+ _partition_id | _partition_offset | _segment_count | _key |
+---------------+-------------------+----------------+------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+             0 |                45 |              1 | NULL | {"data":[{"loan_contract_id":"2","min_date":"2019-05-14","id":"3"}],"database":"adl_prewarning","es":1557798417000,"id":5242,"isDdl":false,"mysqlType":{"loan_contract_id":"varc
+             0 |                46 |              2 | NULL | {"data":[{"loan_contract_id":"7","min_date":"2019-05-14","id":"7"}],"database":"adl_prewarning","es":1557827976000,"id":5542,"isDdl":false,"mysqlType":{"loan_contract_id":"varc
+             0 |                47 |              3 | NULL | {"data":null,"database":"prewarning","es":1557978716000,"id":6116,"isDdl":true,"mysqlType":null,"old":null,"pkNames":null,"sql":"ALTER TABLE a ADD COLUMN age INT","sqlType"
+(3 rows)
+Query 20190519_193635_00009_huyim, FINISHED, 1 node
+Splits: 19 total, 19 done (100.00%)
+0:46 [84 rows, 104KB] [1 rows/s, 2.25KB/s]
+
+presto:default> select json_extract(_message, '$.type') from canal limit 3;
+  _col0
+----------
+ "INSERT"
+ "UPDATE"
+ "ALTER"
+(3 rows)
+Query 20190519_194659_00012_huyim, FINISHED, 1 node
+Splits: 35 total, 35 done (100.00%)
+0:00 [84 rows, 104KB] [315 rows/s, 393KB/s]
+```
+
 ### 2.3.6 JDBC 连接 Presto
 #### 1.新建项目
 在 idea 创建一个maven项目，
@@ -488,7 +574,265 @@ Splits: 18 total, 18 done (100.00%)
 
 #### 3. 编写代码
 创建java类，编写Presto jdbc client代码
-详细代码查看：[PrestoJDBCClient.java](src/main/java/yore/PrestoJDBCClient.java)
+详细代码查看：[PrestoJDBCClient.java](presto-jdbc/src/main/java/yore/PrestoJDBCClient.java)
 
+[presto-jdbc源码](https://github.com/yoreyuan/My_hadoop/tree/master/presto-example/presto-jdbc)
+
+
+
+
+# Kafka
+下载脚本，
+```bash
+curl -o kafka-tpch http://repo1.maven.org/maven2/de/softwareforge/kafka_tpch_0811/1.0/kafka_tpch_0811-1.0.sh
+chmod +x kafka-tpch
+```
+
+运行脚本，创建Topic和加载一些数据
+```bash
+./kafka-tpch load --brokers cdh3:9092,cdh2:9092,cdh1:9092 --prefix ptch. --tpch-type tiny
+```
+
+修改`kafka.properties`为如下
+```bash
+connector.name=kafka
+kafka.default-schema=default
+kafka.table-names=ptch.customer,ptch.lineitem,ptch.orders,ptch.nation,ptch.part,ptch.partsupp,ptch.region,ptch.supplier
+kafka.nodes=cdh1:9092,cdh2:9092,cdh3:9092
+# d(天)、h(小时)、m(分钟)、s(秒)、ms(毫秒)、us(微秒)、ns(纳秒)、
+kafka.connect-timeout=10s
+kafka.hide-internal-columns=false
+```
+
+重启Presto
+```bash
+bin/launcher restart
+```
+
+连接 Presto Cli
+```sql
+[root@cdh6 bin]# ./presto-cli-0.219-executable.jar --catalog kafka --schema ptch
+presto:ptch> show tables;
+  Table
+----------
+ customer
+ lineitem
+ nation
+ orders
+ part
+ partsupp
+ region
+ supplier
+(8 rows)
+Query 20190519_205355_00002_vqku8, FINISHED, 1 node
+Splits: 19 total, 19 done (100.00%)
+0:00 [8 rows, 166B] [17 rows/s, 355B/s]
+```
+
+## 基本查询
+```sql
+presto:ptch> describe customer;
+
+presto:ptch> select count(*) from customer;
+
+presto:ptch> select _message from customer limit 5;
+
+presto:ptch> select sum(cast(json_extract_scalar(_message,'$.accountBalance') as double)) from customer limit 10;
+
+```
+
+## 添加表定义文件
+在 `presto-server-0.219/etc/kafka/` 下新建 `ptch.customer.json` 并重启 Presto
+```json
+{
+  "tableName": "customer",
+  "schemaName": "ptch",
+  "topicName": "ptch.customer",
+  "key": {
+    "dataFormat": "raw",
+    "fields": [
+      {
+        "name": "kafka_key",
+        "dataFormat": "LONG",
+        "type": "BIGINT",
+        "hidden": "false"
+      }
+    ]
+  }
+}
+```
+
+重启： `bin/launcher restart`
+
+查看表信息，可以看到多了一列 **kafka_key**
+```sql
+bin/presto-cli-0.219-executable.jar --catalog kafka --schema ptch
+
+presto:ptch> desc customer;
+      Column       |  Type   | Extra |                   Comment
+-------------------+---------+-------+---------------------------------------------
+ kafka_key         | bigint  |       |
+ _partition_id     | bigint  |       | Partition Id
+ _partition_offset | bigint  |       | Offset for the message within the partition
+ _segment_start    | bigint  |       | Segment start offset
+ _segment_end      | bigint  |       | Segment end offset
+ _segment_count    | bigint  |       | Running message count per segment
+ _message_corrupt  | boolean |       | Message data is corrupt
+ _message          | varchar |       | Message text
+ _message_length   | bigint  |       | Total number of message bytes
+ _key_corrupt      | boolean |       | Key data is corrupt
+ _key              | varchar |       | Key text
+ _key_length       | bigint  |       | Total number of key bytes
+(12 rows)
+Query 20190520_014112_00002_i4shm, FINISHED, 1 node
+Splits: 19 total, 19 done (100.00%)
+0:01 [12 rows, 1.05KB] [15 rows/s, 1.37KB/s]
+
+presto:ptch> select kafka_key from customer order by kafka_key limit 10;
+ kafka_key
+-----------
+         0
+         1
+         2
+         3
+         4
+         5
+         6
+         7
+         8
+         9
+(10 rows)
+Query 20190520_014623_00007_i4shm, FINISHED, 1 node
+Splits: 18 total, 18 done (100.00%)
+0:00 [1.5K rows, 411KB] [7.07K rows/s, 1.89MB/s]
+
+```
+
+### 将 message 中所有的值映射到不同列
+再次更新 `presto-server-0.219/etc/kafka/` 下新建 `ptch.customer.json` 并重启 Presto为：
+```json
+{
+  "tableName": "customer",
+  "schemaName": "ptch",
+  "topicName": "ptch.customer",
+  "key": {
+    "dataFormat": "raw",
+    "fields": [
+      {
+        "name": "kafka_key",
+        "dataFormat": "LONG",
+        "type": "BIGINT",
+        "hidden": "false"
+      }
+    ]
+  },
+  "message": {
+    "dataFormat": "json",
+    "fields": [
+      {
+        "name": "row_number",
+        "mapping": "rowNumber",
+        "type": "BIGINT"
+      },
+      {
+        "name": "customer_Key",
+        "mapping": "customerKey",
+        "type": "BIGINT"
+      },
+      {
+        "name": "name",
+        "mapping": "name",
+        "type": "VARCHAR"
+      },
+      {
+        "name": "address",
+        "mapping": "address",
+        "type": "VARCHAR"
+      },
+      {
+        "name": "nation_key",
+        "mapping": "nationKey",
+        "type": "BIGINT"
+      },
+      {
+        "name": "phone",
+        "mapping": "phone",
+        "type": "VARCHAR"
+      },
+      {
+        "name": "account_balance",
+        "mapping": "accountBalance",
+        "type": "DOUBLE"
+      },
+      {
+        "name": "market_segment",
+        "mapping": "marketSegment",
+        "type": "VARCHAR"
+      },
+      {
+        "name": "comment",
+        "mapping": "comment",
+        "type": "VARCHAR"
+      }
+    ]
+  }
+}
+```
+
+再次查看表信息，可以看到我们前面配置的列已经添加上去了
+```sql
+presto:ptch> desc customer;
+      Column       |  Type   | Extra |                   Comment
+-------------------+---------+-------+---------------------------------------------
+ kafka_key         | bigint  |       |
+ row_number        | bigint  |       |
+ customer_key      | bigint  |       |
+ name              | varchar |       |
+ address           | varchar |       |
+ nation_key        | bigint  |       |
+ phone             | varchar |       |
+ account_balance   | double  |       |
+ market_segment    | varchar |       |
+ comment           | varchar |       |
+ _partition_id     | bigint  |       | Partition Id
+ _partition_offset | bigint  |       | Offset for the message within the partition
+ _segment_start    | bigint  |       | Segment start offset
+ _segment_end      | bigint  |       | Segment end offset
+ _segment_count    | bigint  |       | Running message count per segment
+ _message_corrupt  | boolean |       | Message data is corrupt
+ _message          | varchar |       | Message text
+ _message_length   | bigint  |       | Total number of message bytes
+ _key_corrupt      | boolean |       | Key data is corrupt
+ _key              | varchar |       | Key text
+ _key_length       | bigint  |       | Total number of key bytes
+(21 rows)
+Query 20190520_020241_00003_r6kqj, FINISHED, 1 node
+Splits: 19 total, 19 done (100.00%)
+0:01 [21 rows, 1.64KB] [18 rows/s, 1.47KB/s]
+
+presto:ptch> select * from customer limit 5;
+ kafka_key | row_number | customer_key |        name        |            address             | nation_key |      phone      | account_balance | market_segment |                                                comment                                                 | _part
+-----------+------------+--------------+--------------------+--------------------------------+------------+-----------------+-----------------+----------------+--------------------------------------------------------------------------------------------------------+------
+         0 |          1 |            1 | Customer#000000001 | IVhzIApeRb ot,c,E              |         15 | 25-989-741-2988 |          711.56 | BUILDING       | to the even, regular platelets. regular, ironic epitaphs nag e                                         |
+         1 |          2 |            2 | Customer#000000002 | XSTf4,NCwDVaWNe6tEgvwfmRchLXak |         13 | 23-768-687-3665 |          121.65 | AUTOMOBILE     | l accounts. blithely ironic theodolites integrate boldly: caref                                        |
+         2 |          3 |            3 | Customer#000000003 | MG9kdTD2WBHm                   |          1 | 11-719-748-3364 |         7498.12 | AUTOMOBILE     |  deposits eat slyly ironic, even instructions. express foxes detect slyly. blithely even accounts abov |
+         3 |          4 |            4 | Customer#000000004 | XxVSJsLAGtn                    |          4 | 14-128-190-5944 |         2866.83 | MACHINERY      |  requests. final, regular ideas sleep final accou                                                      |
+         4 |          5 |            5 | Customer#000000005 | KvpyuHCplrB84WgAiGV6sYpZq7Tj   |          3 | 13-750-942-6364 |          794.47 | HOUSEHOLD      | n accounts will have to unwind. foxes cajole accor                                                     |
+(5 rows)
+Query 20190520_020359_00004_r6kqj, FINISHED, 1 node
+Splits: 18 total, 18 done (100.00%)
+0:35 [1.5K rows, 411KB] [42 rows/s, 11.7KB/s]
+
+presto:ptch> select sum(account_balance) from customer limit 10;
+       _col0
+-------------------
+ 6681865.590000002
+(1 row)
+Query 20190520_020616_00005_r6kqj, FINISHED, 1 node
+Splits: 18 total, 18 done (100.00%)
+0:01 [1.5K rows, 411KB] [2.75K rows/s, 755KB/s]
+
+```
+ 
 
 
