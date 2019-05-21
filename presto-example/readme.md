@@ -833,6 +833,189 @@ Splits: 18 total, 18 done (100.00%)
 0:01 [1.5K rows, 411KB] [2.75K rows/s, 755KB/s]
 
 ```
+
+
+## 使用实时数据
+
+### 1. 在Kafka集群上创建一个Topic
+```bash
+kafka-topics --create --zookeeper cdh1:2181,cdh2:2181,cdh3:2181 --replication-factor 1 --partitions 1 --topic test.weblog
+```
+
+### 2. 编写一个Kafka生产者
+[TestProducer](presto-jdbc/src/main/java/yore/TestProducer.java)
+推送到Kafka的数据格式如下：
+```json
+{
+  "user": {
+    "name": "Bob",
+    "gender": "male"
+  },
+  "time": 1558394886956,
+  "website": "www.twitter.com"
+}
+```
+
+
+### 3. 在Presto中创建表
+在`presto-server-0.219/etc/catalog/kafka.properties`配置文件的`kafka.table-names`中添加上Kafka Topic `test.weblog`
+
+在`presto-server-0.219/etc/kafka/`下添加Kafka数据配置json文件 `test.weblog.json`，在这个版本中还不支持时间戳，配置如下：
+```json
+{
+  "tableName": "weblog",
+  "schemaName": "test",
+  "topicName": "test.weblog",
+  "key": {
+    "dataFormat": "raw",
+    "fields": [
+      {
+        "name": "kafka_key",
+        "dataFormat": "LONG",
+        "type": "BIGINT",
+        "hidden": "false"
+      }
+    ]
+  },
+  "message": {
+    "dataFormat": "json",
+    "fields": [
+      {
+        "name": "name",
+        "mapping": "user/name",
+        "type": "VARCHAR"
+      },
+      {
+        "name": "gender",
+        "mapping": "user/gender",
+        "type": "VARCHAR"
+      },
+      {
+        "name": "time",
+        "mapping": "time",
+        "type": "BIGINT"
+      },
+      {
+        "name": "website",
+        "mapping": "website",
+        "type": "VARCHAR"
+      }
+    ]
+  }
+}
+```
+
+### 4. 重启Presto，进行如下查询数据
+```bash
+# 重启
+bin/launcher restart
+
+# 进入cli,连接Kafka
+./presto-cli-0.219-executable.jar --catalog kafka --schema test
+```
+
+进行如下查询(此时可以把Kafka生产者运行，模拟持续的数据源)：  
+[JSON Functions and Operators](https://prestodb.github.io/docs/current/functions/json.html)
+[Date and Time Functions and Operators](https://prestodb.github.io/docs/current/functions/datetime.html)
+```sql
+presto:test> show tables;
+ Table  
+--------
+ weblog 
+(1 row)
+Query 20190521_160458_00002_gf883, FINISHED, 1 node
+Splits: 19 total, 19 done (100.00%)
+0:00 [1 rows, 20B] [2 rows/s, 52B/s]
+
+presto:test> desc weblog;
+      Column       |   Type    | Extra |                   Comment                   
+-------------------+-----------+-------+---------------------------------------------
+ kafka_key         | bigint    |       |                                             
+ name              | varchar   |       |                                             
+ gender            | varchar   |       |                                             
+ time              | timestamp |       |                                             
+ website           | varchar   |       |                                             
+ _partition_id     | bigint    |       | Partition Id                                
+ _partition_offset | bigint    |       | Offset for the message within the partition 
+ _segment_start    | bigint    |       | Segment start offset                        
+ _segment_end      | bigint    |       | Segment end offset                          
+ _segment_count    | bigint    |       | Running message count per segment           
+ _message_corrupt  | boolean   |       | Message data is corrupt                     
+ _message          | varchar   |       | Message text                                
+ _message_length   | bigint    |       | Total number of message bytes               
+ _key_corrupt      | boolean   |       | Key data is corrupt                         
+ _key              | varchar   |       | Key text                                    
+ _key_length       | bigint    |       | Total number of key bytes                   
+(16 rows)
+Query 20190521_160636_00004_gf883, FINISHED, 1 node
+Splits: 19 total, 19 done (100.00%)
+0:00 [16 rows, 1.27KB] [54 rows/s, 4.33KB/s]
+
+
+presto:test> select count(*) from weblog;
+ _col0 
+-------
+    13 
+(1 row)
+Query 20190521_161116_00006_gf883, FINISHED, 1 node
+Splits: 18 total, 18 done (100.00%)
+0:00 [13 rows, 1.17KB] [78 rows/s, 7.1KB/s]
+presto:test> select count(*) from weblog;
+ _col0 
+-------
+    17 
+(1 row)
+Query 20190521_161120_00007_gf883, FINISHED, 1 node
+Splits: 18 total, 18 done (100.00%)
+0:00 [17 rows, 1.53KB] [105 rows/s, 9.5KB/s]
+presto:test> select count(*) from weblog;
+ _col0 
+-------
+    20 
+(1 row)
+Query 20190521_161129_00008_gf883, FINISHED, 1 node
+Splits: 18 total, 18 done (100.00%)
+0:00 [20 rows, 1.79KB] [102 rows/s, 9.16KB/s]
+
+
+presto:test> select kafka_key,name,gender,time,website from weblog limit 10;
+ kafka_key |  name  | gender |     time      |     website      
+-----------+--------+--------+---------------+------------------
+         0 | Bob    | male   | 1558394879467 | www.jd.com       
+         1 | Cara   | female | 1558394880952 | www.linkin.com   
+         2 | David  | male   | 1558394881952 | www.facebook.com 
+         3 | Bob    | male   | 1558394882952 | www.linkin.com   
+         4 | Edward | male   | 1558394883952 | www.google.com   
+         5 | Alice  | female | 1558394884952 | www.facebook.com 
+         6 | Cara   | female | 1558394885952 | www.facebook.com 
+         7 | Bob    | male   | 1558394886956 | www.twitter.com  
+         0 | Cara   | female | 1558455070939 | www.google.com   
+         1 | David  | male   | 1558455072607 | www.facebook.com 
+(10 rows)
+Query 20190521_162907_00003_y7pq6, FINISHED, 1 node
+Splits: 18 total, 18 done (100.00%)
+0:00 [20 rows, 1.79KB] [62 rows/s, 5.62KB/s]
+
+presto:test> select kafka_key,name,gender,from_unixtime(time/1000),website from weblog limit 10;
+ kafka_key |  name  | gender |          _col3          |     website      
+-----------+--------+--------+-------------------------+------------------
+         0 | Bob    | male   | 2019-05-21 07:27:59.000 | www.jd.com       
+         1 | Cara   | female | 2019-05-21 07:28:00.000 | www.linkin.com   
+         2 | David  | male   | 2019-05-21 07:28:01.000 | www.facebook.com 
+         3 | Bob    | male   | 2019-05-21 07:28:02.000 | www.linkin.com   
+         4 | Edward | male   | 2019-05-21 07:28:03.000 | www.google.com   
+         5 | Alice  | female | 2019-05-21 07:28:04.000 | www.facebook.com 
+         6 | Cara   | female | 2019-05-21 07:28:05.000 | www.facebook.com 
+         7 | Bob    | male   | 2019-05-21 07:28:06.000 | www.twitter.com  
+         0 | Cara   | female | 2019-05-22 00:11:10.000 | www.google.com   
+         1 | David  | male   | 2019-05-22 00:11:12.000 | www.facebook.com 
+(10 rows)
+Query 20190521_163618_00006_y7pq6, FINISHED, 1 node
+Splits: 34 total, 34 done (100.00%)
+0:00 [20 rows, 1.79KB] [48 rows/s, 4.32KB/s]
+
+```
+
  
 
 
