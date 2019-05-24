@@ -4,6 +4,49 @@ Presto -- Distributed SQL Query Engine for Big Data
 [项目源码 - GitHub](https://github.com/prestodb/presto)
 [可参考官方文档](https://prestodb.github.io/docs/current/)
 
+目录
+--
+- 1 Presto 概述
+- 2 Presto 安装
+    + 2.1 准备
+    + 2.2 安装包的获取
+    + 2.3 Presto 安装与部署
+        * 2.3.1 将 presto-server-0.219.tar.gz 传输到安装位置
+        * 2.3.2 创建配置文件
+        * 2.3.3 修改配置文件
+            * (1) node.properties
+            * (2) config.properties
+            * (3) jvm.config
+            * (4) log.properties
+            * (5) Catalog 配置
+                + ① Hive
+                + ② Mysql
+                + ③ Kafka
+                + ④ Kudu
+                + ⑤ Mongo
+        * 2.3.4 启动和停止服务
+        * 2.3.5 客户端部署
+            * (1). 部署 cli 端
+            * (2). 启动 Presto CLI
+            * 
+        * 2.3.6 JDBC 连接 Presto
+            * (1) 新建项目
+            * (2) pom.xml
+            * (3) 代码
+            * (4) 运行
+- 3 Kafka Connector
+    + 3.1基本查询
+    + 3.2 添加表定义文件
+        * 3.2.1将 message 中所有的值映射到不同列   
+    + 3.3使用实时数据
+        * 3.3.1 在Kafka集群上创建一个Topic
+        * 3.3.2 编写一个Kafka生产者
+        * 3.3.3 在Presto中创建表
+        * 3.3.4 重启Presto，进行如下查询数据
+
+
+
+
 # 1 Presto 概述
 
 Presto 是一个在 Facebook 主持下运营的开源项目。Presto是一种旨在使用分布式查询有效查询大量数据的工具，Presto是专门为大数据实时查询计算呢而设计和开发的产品，其为基于 Java 开发的，对使用者和开发者而言易于学习。
@@ -254,7 +297,7 @@ cp presto/presto-server-rpm/src/main/resources/dist/config/node.properties /opt/
 
 ### 2.3.3 修改配置文件
 分别配置如下配置文件：
-#### 1. node.properties
+#### (1). node.properties
 ```bash
 node.environment=test
 node.id=db519624-18e8-4ee5-af30-a6545d10fcdb
@@ -268,7 +311,7 @@ node.launcher-log-file=/var/log/presto/launcher.log
 **node.id:** Presto集群中的每个node的唯一标识。属于同一个Presto集群的各个Presto的node节点标识必须不同，可以以uuid的值指定属于该属性的值，linux可以用`uuidgen`生成。  
 **node.data-dir:** 在每个Presto Node所在服务器的操作系统中的路径，Presto会在该路径下存放日志和其他的Presto数据。  
 
-#### 2. config.properties
+#### (2). config.properties
 该配置文件的配置项应用于每个Presto的服务进程，每个Presto服务进程既可作为Conrdinator，也可作为Worker.
 ```bash
 # Conrdinator & Wroker
@@ -324,7 +367,7 @@ query.hash-partition-count=2
 **discovery-server.enabled:**  Presto使用Discover服务来查找集群中的所有节点，每个Presto实例都会在启动时使用Discovery服务注册自己。为了简化部署可以在Coordinator节点启动的时候启动Discover服务。  
 **discovery.uri:** Discovery服务器的URI。因为我们已经将Discovery嵌入了Presto Coordinator服务中，因此它应该是Presto Coordinator的URI。注意，改URI不要以`/`结尾。  
 
-#### 3. jvm.config
+#### (3). jvm.config
 Presto是Java语言开发的，每个Presto服务进程都是运行在JVM之上的，因此需要在配置文件中指定Presto服务进程的Java运行环境。
 改配置文件中包含了一系列启动Java虚拟机时所需要的命令行参数。  
 在集群中Coordinator和Worker上的JVM配置文件是一样的。
@@ -349,7 +392,7 @@ Presto是Java语言开发的，每个Presto服务进程都是运行在JVM之上�
 -XX:+ExitOnOutOfMemoryError
 ```
 
-#### 4. log.properties
+#### (4). log.properties
 在改配置文件中设置Logger的最小日志级别。 
 ```bash
 com.facebook.presto=INFO
@@ -358,12 +401,13 @@ com.ning.http.client=WARN
 com.facebook.presto.server.PluginManager=DEBUG
 ```
 
-#### 5.1 Catalog 配置
+#### (5). Catalog 配置
 Presto通过 Connector 来访问数据，一种类型的数据源与一种而类型的Connector对应。
 在Presto实际使用过程中，会根据实际的业务需要建立一个或者多个Catalog，而每种Catalog都有一个特定类型的Connector与之对应。
 更多的Connector可以访问 [Connectors](http://prestodb.github.io/docs/current/connector.html)
 
-1. 以Hive为例，在`ect/catalog/` 下配置`hive.properties`如下：
+1. 以Hive为例，在`ect/catalog/` 下配置`hive.properties`如下：  
+[Hive Connector 官方文档](https://prestodb.github.io/docs/current/connector/hive.html)
 ```bash
 connector.name=hive-hadoop2
 # Hive Metastore 服务器端口 
@@ -376,7 +420,8 @@ hive.allow-rename-table=true
 
 ```
 
-2. Mysql配置`mysql.properties`
+2. Mysql配置`mysql.properties`  
+[MySQL Connector 官方文档](https://prestodb.github.io/docs/current/connector/mysql.html)
 ```bash
 connector.name=mysql
 connection-url=jdbc:mysql://mysql:13306
@@ -384,8 +429,8 @@ connection-user=root
 connection-password=swarm
 ```
 
-2. Kafka配置
-[Kafka Connector官方文档](https://prestodb.github.io/docs/current/connector/kafka.html)
+3. Kafka配置
+[Kafka Connector 官方文档](https://prestodb.github.io/docs/current/connector/kafka.html)
 
 连接器允许将Apache Kafka主题用作Presto中的表。每条消息在Presto中显示为一行。**支持Apache Kafka 0.8+，但强烈建议使用0.8.1或更高版本。**
 
@@ -402,8 +447,8 @@ kafka.connect-timeout=10s
 
 ```
 
-
-3. Kudu配置
+4. Kudu配置  
+[Kudu Connector 官方文档](https://prestodb.github.io/docs/current/connector/kudu.html)  
 在 `etc/catalog/` 下新建配置文件`kudu.properties`，如下配置
 ```bash
 connector.name=kudu
@@ -441,6 +486,22 @@ kudu.client.default-socket-read-timeout = 10s
 ```
 
 
+5. MongoDB配置
+[MongoDB Connector官方文档](https://prestodb.github.io/docs/current/connector/mongodb.html)  
+MongoDB版本官方强烈建议使用3.0或者更高版本，但也支持2.6+版本。
+
+在 `etc/catalog/` 下新建配置文件`mongodb.properties`，如下配置
+```bash
+connector.name=mongodb
+
+## List of all mongod servers
+mongodb.seeds=host:27017
+
+## The maximum wait time
+mongodb.max-wait-time=30
+
+```
+
 ### 2.3.4 启动和停止服务
 到每个节点，通过运行以下命令将Presto作为守护程序启动：
 ```bash
@@ -466,7 +527,7 @@ bin/launcher stop
 ### 2.3.5 客户端部署
 前面已经成功完成了Presto集群服务的安装、部署和启动，之后可以通过Presto的客户端访问集群并执行数据查询和计算了。
 
-#### 1. 部署 cli 端
+#### (1). 部署 cli 端
 Presto的客户端是由子工程 `presto-cli` 编译得到，编译后的文件为 `presto-cli-0.219-executable.jar` ，
 也可以直接下载官网编译好的 [presto-cli-0.219-executable.jar](https://repo1.maven.org/maven2/com/facebook/presto/presto-cli/0.219/presto-cli-0.219-executable.jar)
 将此喷溅拷贝到安装的目录，例如拷贝到 `presto-server-0.219/bin/` 下
@@ -478,16 +539,19 @@ chmod 755 presto-cli-0.219-executable.jar
 bin/presto-cli-0.219-executable.jar --help
 ```
 
-#### 2. 启动 Presto CLI
+#### (2). 启动 Presto CLI
 ```bash
 # Hive
 bin/presto-cli-0.219-executable.jar --server cdh6:8080 --catalog hive --schema default
 # Mysql
 bin/presto-cli-0.219-executable.jar --server cdh6:8080 --catalog mysql --schema 库名
 # Kafka
-./presto-cli-0.219-executable.jar --server cdh6:8080 --catalog kafka --schema default
+./presto-cli-0.219-executable.jar --server cdh6:8080 --catalog kafka --schema test
 # Kudu
 ./presto-cli-0.219-executable.jar --server cdh6:8080 --catalog kudu --schema default
+# MongoDB
+./presto-cli-0.219-executable.jar --catalog mongodb --schema Mongo库名
+
 ```
 
 在hvie中 default 库下执行如下查询
@@ -557,10 +621,10 @@ Splits: 35 total, 35 done (100.00%)
 ```
 
 ### 2.3.6 JDBC 连接 Presto
-#### 1.新建项目
+#### (1). 新建项目
 在 idea 创建一个maven项目，
 
-#### 2. 在`pom.xml`中引入依赖
+#### (2). 在`pom.xml`中引入依赖
 ```xml
     <dependencies>
         <!-- 0.219 com.facebook.presto已移至 io.prestosql.presto-jdbc -->
@@ -572,7 +636,7 @@ Splits: 35 total, 35 done (100.00%)
     </dependencies>
 ```
 
-#### 3. 编写代码
+#### (3). 编写代码
 创建java类，编写Presto jdbc client代码
 详细代码查看：[PrestoJDBCClient.java](presto-jdbc/src/main/java/yore/PrestoJDBCClient.java)
 
@@ -581,7 +645,7 @@ Splits: 35 total, 35 done (100.00%)
 
 
 
-# Kafka
+# 3 Kafka
 下载脚本，
 ```bash
 curl -o kafka-tpch http://repo1.maven.org/maven2/de/softwareforge/kafka_tpch_0811/1.0/kafka_tpch_0811-1.0.sh
@@ -629,7 +693,7 @@ Splits: 19 total, 19 done (100.00%)
 0:00 [8 rows, 166B] [17 rows/s, 355B/s]
 ```
 
-## 基本查询
+## 3.1 基本查询
 ```sql
 presto:ptch> describe customer;
 
@@ -641,7 +705,7 @@ presto:ptch> select sum(cast(json_extract_scalar(_message,'$.accountBalance') as
 
 ```
 
-## 添加表定义文件
+## 3.2 添加表定义文件
 在 `presto-server-0.219/etc/kafka/` 下新建 `ptch.customer.json` 并重启 Presto
 ```json
 {
@@ -708,7 +772,7 @@ Splits: 18 total, 18 done (100.00%)
 
 ```
 
-### 将 message 中所有的值映射到不同列
+### 3.2.1将 message 中所有的值映射到不同列
 再次更新 `presto-server-0.219/etc/kafka/` 下新建 `ptch.customer.json` 并重启 Presto为：
 ```json
 {
@@ -835,14 +899,14 @@ Splits: 18 total, 18 done (100.00%)
 ```
 
 
-## 使用实时数据
+## 3.3使用实时数据
 
-### 1. 在Kafka集群上创建一个Topic
+### 3.3.1 在Kafka集群上创建一个Topic
 ```bash
 kafka-topics --create --zookeeper cdh1:2181,cdh2:2181,cdh3:2181 --replication-factor 1 --partitions 1 --topic test.weblog
 ```
 
-### 2. 编写一个Kafka生产者
+### 3.3.2 编写一个Kafka生产者
 [TestProducer](presto-jdbc/src/main/java/yore/TestProducer.java)
 推送到Kafka的数据格式如下：
 ```json
@@ -857,7 +921,7 @@ kafka-topics --create --zookeeper cdh1:2181,cdh2:2181,cdh3:2181 --replication-fa
 ```
 
 
-### 3. 在Presto中创建表
+### 3.3.3 在Presto中创建表
 在`presto-server-0.219/etc/catalog/kafka.properties`配置文件的`kafka.table-names`中添加上Kafka Topic `test.weblog`
 
 在`presto-server-0.219/etc/kafka/`下添加Kafka数据配置json文件 `test.weblog.json`，在这个版本中还不支持时间戳，配置如下：
@@ -905,7 +969,7 @@ kafka-topics --create --zookeeper cdh1:2181,cdh2:2181,cdh3:2181 --replication-fa
 }
 ```
 
-### 4. 重启Presto，进行如下查询数据
+### 3.3.4 重启Presto，进行如下查询数据
 ```bash
 # 重启
 bin/launcher restart
