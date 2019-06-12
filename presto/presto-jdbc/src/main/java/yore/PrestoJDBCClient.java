@@ -3,7 +3,6 @@ package yore;
 import io.prestosql.jdbc.PrestoConnection;
 import io.prestosql.jdbc.PrestoStatement;
 
-import java.io.IOException;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;

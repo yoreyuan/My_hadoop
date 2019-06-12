@@ -23,7 +23,7 @@
         <dependency>
             <groupId>io.prestosql</groupId>
             <artifactId>presto-jdbc</artifactId>
-            <version>310</version>
+            <version>314</version>
         </dependency>
 
         <dependency>

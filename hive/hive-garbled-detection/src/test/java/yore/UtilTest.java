@@ -40,7 +40,30 @@ public class UtilTest {
 //        System.out.println(result);
 
 //        System.out.println(isT(str, "UTF-8"));
-        System.out.println(str.split("\t").length + "\t" + isMessyCode(str));
+//        System.out.println(str.split("\t").length + "\t" + isMessyCode(str));
+
+        char[] lc = str.toCharArray();
+
+        for(char c : lc){
+            if(Util.isWord(c))continue;
+            System.out.println(c + "\t" + Util.isChinese(c));
+        }
+
+
+
+    }
+
+
+    @Test
+    public void isChinese(){
+        String line = "a1A2;；客鏇Ã©Å5冶묈";
+        line = "鏇挎崲妯″紡涓庣粰瀹氭浛鎹㈠瓧绗︿覆鐩稿尮閰嶇";
+
+        boolean r = line.matches("[^\u4e00-\u9fa5\\w]+");
+
+
+        System.out.println(r);
+
 
     }
 
