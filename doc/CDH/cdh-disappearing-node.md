@@ -11,10 +11,10 @@ CDH集群也是大数据常用的大数据平台，可以通过页面方式安�
 既然 `Cloudera Management Service` 无法提供服务，于是尝试重启这个服务，再重启的时候发现其他节点对一个的角色都可以启动成功，
 但唯独有问题的这个节点现在是服务重启也失败，提示：`No space left on device`，于是登陆这个节点服务器，查看内存：`free -m` 内存完全充足，
 那应该是磁盘的问题，首先查看磁盘`i节点`使用信息`df -ia`:
-![node-df-ia](image/node-df-ia.png)
+![node-df-ia](../image/node-df-ia.png)
 
 查看磁盘使用：`df -ha`
-![node-df-ha](image/node-df-ha.png)
+![node-df-ha](../image/node-df-ha.png)
 
 看这个图也便找到了问题的原因，**磁盘空间不够了**，那就通过  `du -hcd 1 /opt`进一步查看被占用最多的文件，依次排查，
 最后发现是测试环境的Flink程序的日志占用了大量空间，因为测试环境会提交很多实时测试代码，日志级别也没有严格限制，
@@ -40,7 +40,7 @@ CDH集群也是大数据常用的大数据平台，可以通过页面方式安�
 ```bash
 lsof | grep deleted | grep `pwd`
 ```
-![node-lsof-deleted](image/node-lsof-deleted.png)
+![node-lsof-deleted](../image/node-lsof-deleted.png)
 找到对应 pid 的服务，重启这些服务，例如上图，发现只有Flink服务使用，于是输入如下命令重启
 ```bash
 # 关闭Flink集群服务
@@ -61,47 +61,10 @@ i节点没问题，但是写入数据时，空间不够，pid无法写入这个�
 
 
 最后将将需要的服务迁移到这个节点，重启服务即可。
-![node-cloudera-manager-server](image/node-cloudera-manager-server.png)
+![node-cloudera-manager-server](../image/node-cloudera-manager-server.png)
 
 
+<br/><br/><br/>
+******
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+也可以访问我的博客 [CDH集群'消失'的节点](https://blog.csdn.net/github_39577257/article/details/91129236)
