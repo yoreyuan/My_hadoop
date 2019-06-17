@@ -134,7 +134,8 @@ public class TagTest {
         kuduClient = new KuduClient.KuduClientBuilder(KUDU_MASTERS).build();
 
 //        alterTable("tag_5", 200);
-        createTable("tag", 301);
+//        createTable("tag_5", 5);
+        insertTest("tag_5", 100000, 100);
     }
 
 
@@ -176,7 +177,7 @@ public class TagTest {
         hashKeys.add("_id");
         // 需要 hash 的列，好 Hash 到的桶数
         cto.addHashPartitions(hashKeys, 8);
-
+        cto.setNumReplicas(1);
         // 创建表
         kuduClient.createTable(tableName, schema, cto);
         System.out.println("$ Created table " + tableName);
@@ -184,7 +185,7 @@ public class TagTest {
     }
 
 
-    /**
+    /**32
      * 修改表：增加列
      *
      * @auther: yore

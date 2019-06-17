@@ -22,7 +22,7 @@ object ImpalaJDBCClient {
       conn = DriverManager.getConnection(URL)
 
       var sql = "show tables"
-      sql = "select * from test"
+      sql = "select * from tag_5 limit 10"
 
       ps = conn.prepareStatement(sql)
       val result: ResultSet = ps.executeQuery()
@@ -41,6 +41,7 @@ object ImpalaJDBCClient {
     }finally {
       if(ps != null) ps.close()
       if(conn != null) conn.close()
+      println("-"*26)
     }
 
 
