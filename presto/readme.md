@@ -121,7 +121,7 @@ Operator消费、转换和生成数据。例如，表扫描从 Connector 获取�
 
 
 # 2. Presto 安装
-可参考官方文档：[2.1. Deploying Presto](https://prestodb.github.io/docs/current/)
+可参考官方文档：[2.1. Deploying Presto](https://prestodb.github.io/docs/current/installation.html)
 
 ## 2.1 准备
 安装前准备： 
