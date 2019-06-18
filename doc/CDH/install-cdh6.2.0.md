@@ -55,7 +55,13 @@ Oracle JDK 安装，等CDH安装完毕，需要的组建服务安装配置完成
 	+ 4.1 Error starting NodeManager
 	+ 4.2 Could not open file in log_dir /var/log/catalogd: Permission denied
 	+ 4.3 Cannot connect to port 2049
-	+ 4.4 安装组件异常
+	+ 4.4 Kafka不能创建Topic
+	+ 4.5 安装Hive组件异常
+	+ 4.6 Impala时区问题设置
+	+ 4.7 hdfs用户登录不上
+	+ 4.8 NTP问题
+	+ 4.9 安装组件的其他异常
+	
 * PO一张最后安装完成的CDH Web 页面
 * 最后
 
@@ -647,6 +653,8 @@ chown  -R impala:impala /var/log/catalogd
 chown  -R impala:impala /var/log/statestore
 ```
 
+
+
 ## 4.3 Cannot connect to port 2049
 ```
 CONF_DIR=/var/run/cloudera-scm-agent/process/137-hdfs-NFSGATEWAY
@@ -668,9 +676,112 @@ using /opt/cloudera/parcels/CDH-6.2.0-1.cdh6.2.0.p0.967373/lib/bigtop-utils as J
  systemctl start rpcbind.service
 ```
 
+## 4.4 Kafka不能创建Topic
+当我们将Kafka组件安装成功之后，我们创建一个Topic，发现创建失败：
+```
+[root@cdh2 lib]# kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic canal
+Error while executing topic command : Replication factor: 1 larger than available brokers: 0.
+19/06/16 23:27:30 ERROR admin.TopicCommand$: org.apache.kafka.common.errors.InvalidReplicationFactorException: Replication factor: 1 larger than available brokers: 0.
+```
+此时可以登陆`zkCli.sh` 查看Kafka的zNode信息，发现一切正常，ids都在，后台程序创建的Topic Name也在，但就是无法用命令查看。
 
-## 4.4 安装组件异常
-如果前面都没问题体，在安装组件最常见的失败异常，就是文件的角色和权限问题，请参照4.2方式排查和修复。
+**此时可以先将Zookeeper和Kafka都重启一下，再尝试，如果依旧不行，将Kafka在Zookeeper的zNode目录设置为根节点**。然后重启，再次创建和查看，发现现在Kafka正常了。
+
+## 4.5 安装Hive组件异常
+查看日志如果提示metastore获取VERSION失败，可以查看Hive的元数据库`hive`库下是否有元数据表，如果没有，手动将表初始化到Mysql的hive库下：
+```
+# 查找Hive元数据初始化的sql脚本，会发现搜到了各种版本的sql脚本
+find / -name hive-schema*mysql.sql
+# 例如可以得到：/opt/cloudera/parcels/CDH-6.2.0-1.cdh6.2.0.p0.967373/lib/hive/scripts/metastore/upgrade/mysql/hive-schema-2.1.1.mysql.sql
+
+# 登陆Mysql数据库
+mysql -u root -p
+> use hive;
+> source /opt/cloudera/parcels/CDH-6.2.0-1.cdh6.2.0.p0.967373/lib/hive/scripts/metastore/upgrade/mysql/hive-schema-2.1.1.mysql.sql
+```
+这一步就初始化了Hive的元数据表，然后重启Hive实例的服务。
+
+
+## 4.6 Impala时区问题设置
+Impala不进行设置，获取的日期类型的数据时区是有八个小时的时差，因此最好设置一下。
+
+<kbd>Cloudera Manager Web页面</kbd> &nbsp;>&nbsp;  <kbd>Impala</kbd>  &nbsp;>&nbsp;  <kbd>配置</kbd>  &nbsp;>&nbsp;  <kbd>
+搜索：`Impala Daemon 命令行参数高级配置代码段（安全阀）`</kbd>  &nbsp;>&nbsp;  <kbd>添加 `-use_local_tz_for_unix_timestamp_conversions=true`</kbd> 
+
+保存配置，并重启Impala。
+
+
+## 4.7 hdfs用户登录不上
+当hdfs开启权限认证时，切换到hdfs对数据进行操作是：
+```bash
+[root@cdh1 ~]# su hdfs
+This account is currently not available.
+```
+此时查看系统的用户信息，将`hdfs` 的`/sbin/nologin`改为`/bin/bash`，然后保存，再次登录hdfs即可。
+```
+[root@cdh1 ~]# cat /etc/passwd | grep hdfs
+hdfs:x:954:961:Hadoop HDFS:/var/lib/hadoop-hdfs:/sbin/nologin
+
+#将上面的信息改为如下
+ hdfs:x:954:961:Hadoop HDFS:/var/lib/hadoop-hdfs:/bin/bash
+```
+
+## 4.8 NTP问题
+查看角色日志详细信息发现：
+```
+Check failed: _s.ok() Bad status: Runtime error: Cannot initialize clock: failed to wait for clock sync using command '/usr/bin/chronyc waitsync 60 0 0 1': /usr/bin/chronyc: process exited with non-zero status 1
+```
+在服务器上运行` ntptime` 命令的信息如下，说明NTP存在问题
+```
+[root@cdh3 ~]# ntptime
+ntp_gettime() returns code 5 (ERROR)
+  time e0b2b833.5be28000  Tue, Jun 18 2019  9:09:07.358, (.358925),
+  maximum error 16000000 us, estimated error 16000000 us, TAI offset 0
+ntp_adjtime() returns code 5 (ERROR)
+  modes 0x0 (),
+  offset 0.000 us, frequency 9.655 ppm, interval 1 s,
+  maximum error 16000000 us, estimated error 16000000 us,
+  status 0x40 (UNSYNC),
+  time constant 10, precision 1.000 us, tolerance 500 ppm,
+```
+特别要注意一下输出中的重要部分（us - 微妙）：
+* `maximum error 16000000 us`：这个时间误差为16s，已经高于Kudu要求的最大误差
+* `status 0x40 (UNSYNC)`：同步状态，此时时间已经不同步了；如果为`status 0x2001 (PLL,NANO)`时则为健康状态。
+
+正常的信息如下：
+```
+[root@cdh1 ~]# ntptime
+ntp_gettime() returns code 0 (OK)
+  time e0b2b842.b180f51c  Tue, Jun 18 2019  9:09:22.693, (.693374110),
+  maximum error 27426 us, estimated error 0 us, TAI offset 0
+ntp_adjtime() returns code 0 (OK)
+  modes 0x0 (),
+  offset 0.000 us, frequency 3.932 ppm, interval 1 s,
+  maximum error 27426 us, estimated error 0 us,
+  status 0x2001 (PLL,NANO),
+  time constant 6, precision 0.001 us, tolerance 500 ppm,
+```
+
+如果是`UNSYNC`状态，请查看服务器的NTP服务状态：`systemctl  status  ntpd.service`，如果没有配置NTP服务的请安装，然后进行配置`/etc/ntp.conf`，例如时间同步服务配置：
+```
+driftfile /var/lib/ntp/drift
+restrict default nomodify notrap nopeer noquery
+restrict 127.0.0.1 
+restrict ::1
+restrict localhost mask 255.255.255.0 nomodify notrap
+server 127.127.1.0	 # local clock
+fudge  127.127.1.0   stratum 10
+includefile /etc/ntp/crypto/pw
+keys /etc/ntp/keys
+disable monitor
+```
+其他节点上配置`server ntp服务ip`。完成后启动`systemctl  start  ntpd.service`。手动同步时间`ntpdate -u ntp-server-ip`。
+这部分介绍可以查看文档[NTP Clock Synchronization](https://www.cloudera.com/documentation/enterprise/5-15-x/topics/kudu_troubleshooting.html#ntp_clock_sync)，或者其他文档。
+
+
+## 4.9 安装组件的其他异常
+如果前面都没问题体，在安装组件最常见的失败异常，就是文件的角色和权限问题，请参照4.2方式排查和修复。多查看对应的日志，根据日志信息解决异常。
+
 
 
 # PO一张最后安装完成的CDH Web 页面
@@ -683,3 +794,15 @@ using /opt/cloudera/parcels/CDH-6.2.0-1.cdh6.2.0.p0.967373/lib/bigtop-utils as J
 
 
 
+```
+[root@cdh3 ~]# ntptime
+ntp_gettime() returns code 5 (ERROR)
+  time e0b2b833.5be28000  Tue, Jun 18 2019  9:09:07.358, (.358925),
+  maximum error 16000000 us, estimated error 16000000 us, TAI offset 0
+ntp_adjtime() returns code 5 (ERROR)
+  modes 0x0 (),
+  offset 0.000 us, frequency 9.655 ppm, interval 1 s,
+  maximum error 16000000 us, estimated error 16000000 us,
+  status 0x40 (UNSYNC),
+  time constant 10, precision 1.000 us, tolerance 500 ppm,
+```
