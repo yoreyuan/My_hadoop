@@ -2,6 +2,29 @@ Azkaban - Open-source Workflow Manager
 ===
 [Azkaban 官网](https://azkaban.github.io/)
 
+# 目录
+* [安装 - 从源码开始构建](#安装---从源码开始构建)
+ + [clone 源码](#clone-源码)
+ + [Build](#Build)
+ + [切换到需要的版本](#切换到需要的版本)
+ + [开始](开始)
+  - [设置数据库](#设置数据库)
+  - [服务端](#服务端)
+   * [azkaban.properties](azkaban-properties)
+   * [azkaban-users.xml](azkaban-users-xml)
+  - [执行端](#执行端)
+   * [azkaban.properties](#azkaban-properties)
+ + [启动](#启动)
+ + [使用](#使用)
+  - [Project部分](#Project部分)
+  - [Job的创建](#Job的创建)
+  - [查看Job](#查看Job)
+  - [多Job工作流](#多Job工作流)
+
+*****
+
+<br/>
+
 Azkaban是在LinkedIn上创建的批处理工作流作业调度程序，用于运行Hadoop作业。 
 Azkaban通过作业依赖性解决订单，并提供易于使用的Web用户界面来维护和跟踪您的工作流程。
 
@@ -16,7 +39,7 @@ Features
 * 跟踪用户操作
 * 有关失败和成功的电子邮件提醒
 * SLA警报和自动查杀
-* [重试失败的工作](#d_flink.job)
+* 重试失败的工作
 
 Azkaban由三部分构成：
 1. Relational Database(Mysql)
