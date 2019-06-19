@@ -16,7 +16,7 @@ Features
 * 跟踪用户操作
 * 有关失败和成功的电子邮件提醒
 * SLA警报和自动查杀
-* 重试失败的工作
+* [重试失败的工作](#d_flink.job)
 
 Azkaban由三部分构成：
 1. Relational Database(Mysql)
