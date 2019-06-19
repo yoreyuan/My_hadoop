@@ -13,7 +13,7 @@ Azkaban - Open-source Workflow Manager
             * [azkaban.properties](#azkaban-properties)
             * [azkaban-users.xml](#azkaban-users-xml)
         - [执行端](#执行端)
-            * [azkaban.properties](#azkaban-properties-2)
+            * [azkaban.properties](#azkaban-properties-1)
     + [启动](#启动)
     + [使用](#使用)
         - [Project部分](#Project部分)
