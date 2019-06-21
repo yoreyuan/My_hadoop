@@ -31,3 +31,39 @@ MAILTO=root
  crontab -l
 ```
 
+
+# 使用
+比如用 `crontab` 来定时执行脚本，监控某个程序的运行状态，如果程序没有运行，则启动程序
+
+脚本如下，例如创建一个`monitoring.sh`脚本，内容如下
+```bash
+#!/bin/bash
+
+# 监控某个进程的脚本
+#######
+
+ps -fe|grep grunt |grep -v grep
+if [ $? -ne 0 ]
+then
+	now_date=`date +"%Y-%m-%d %H:%M:%S"`
+	echo -e "$now_date \t elasticsearch-head 挂起，尝试重启"
+	# 必须带这个目录下执行，否则启动失败。
+	cd /usr/local/elasticsearch-head
+	npm run start >/dev/null 2>&1 &
+#else
+#echo "runing....."
+fi
+##### 
+# grunt 表示进程特征字符串，能够查询到唯一进程的特征字符串
+# 0表示存在的
+# $? -ne 0 不存在，$? -eq 0 存在
+```
+
+每隔3分钟监测一次，执行`crontab -e`，输入`i` 插入如下内容
+```bash
+*/3 * * * * /bin/bash /home/es/monitoring.sh >> /var/log/es/monitoring.log
+```
+`esc`退出编辑模式，`:wq`保存。
+
+
+

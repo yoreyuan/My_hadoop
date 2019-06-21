@@ -2,6 +2,33 @@ Elasticsearch
 ====
 [ES 官网](https://www.elastic.co/cn/) | [ES GitHub](https://github.com/elastic/elasticsearch)
 
+# 目录
+* 1 ES 安装
+    + 1.1 下载解压
+    + 1.2 设置用户和权限
+    + 1.3 配置
+        - 配置 elasticsearch.yml
+    + 1.4 启动
+    + 1.5 Head 插件安装 
+        - 1.5.1 npm安装
+        - 1.5.2 如果没有安装 Git 先安装 Git
+        - 1.5.3 下载 `elasticsearch-head`
+        - 1.5.4 安装插件
+        - 1.5.5 配置 Gruntfile.js 
+        - 1.5.6 配置 _site/app.js
+        - 1.5.7 启动访问
+        - 1.5.8 定时监控Head 插件是否运行
+    + 1.6 重启服务
+        - 1.6.1 关闭服务
+        - 1.6.2 修改配置
+        - 1.6.3 启动服务
+* 2 中文分词器
+    + 2.1 安装 IK 分词器
+    + 2.2 配置 IK 分词器(没特殊要求可以先不用配置)
+    + 2.3 使用
+
+<br/><br/>
+
 
 # 1. ES 安装
 本次以 `Elasticsearch 6.8.0` 安装示例。可以打开连接下载
@@ -237,6 +264,43 @@ grunt server &
 ![Elasticsearch-head](image/Elasticsearch-head.png)
 
 
+### 1.5.8 定时监控Head 插件是否运行
+head插件有时会在后台自动挂掉，为了可以正常访问`elasticsearch-head`，我们可以编写一个定时监测的脚本，当发现停止运行时则启动
+
+例如在`/usr/local/elasticsearch-head`下新建一个脚本文件`es-head-monitoring.sh`，内容如下
+```bash
+#!/bin/bash
+
+# 监控某个进程的脚本
+#######
+
+ps -fe|grep grunt |grep -v grep
+if [ $? -ne 0 ]
+then
+	now_date=`date +"%Y-%m-%d %H:%M:%S"`
+	echo -e "$now_date \t elasticsearch-head 挂起，尝试重启"
+	# 必须带这个目录下执行，否则启动失败。
+	cd /usr/local/elasticsearch-head
+	npm run start >/dev/null 2>&1 &
+#else
+#echo "runing....."
+fi
+
+##### 
+# grunt 表示进程特征字符串，能够查询到唯一进程的特征字符串
+# 0表示存在的
+# $? -ne 0 不存在，$? -eq 0 存在
+```
+
+执行定时任务，例如没3分钟，执行一次上述脚本
+```bash
+crontab -e
+# 插入如下命令
+*/3 * * * * /bin/bash /usr/local/elasticsearch-head/es-head-monitoring.sh >> /var/log/es/monitoring.log
+```
+
+
+
 ## 1.6 重启服务
 ### 1.6.1 关闭服务
 关闭es服务。可以通过查看进程，获取进程号，然后关闭
@@ -263,12 +327,12 @@ grunt   26232 root   22u  IPv4 441471220      0t0  TCP mongo1:jetdirect (LISTEN)
 启动 elasticsearch-head 见`1.5.7`
 
 
-## 1.7 中文分词器
+# 2 中文分词器
 常用的中文分词器由 IK 、Hanlp等 
 [medcl/elasticsearch-analysis-ik](https://github.com/medcl/elasticsearch-analysis-ik)  
 [KennFalcon/elasticsearch-analysis-hanlp](https://github.com/KennFalcon/elasticsearch-analysis-hanlp)
 
-### 1.7.1 安装 IK 分词器
+## 2.1 安装 IK 分词器
 下载的版本和安装的 elasticsearch 版本一致。例如这里下载 v6.8.0 
 [elasticsearch-analysis-ik-6.8.0.zip](https://github.com/medcl/elasticsearch-analysis-ik/releases/download/v6.8.0/elasticsearch-analysis-ik-6.8.0.zip)
 
@@ -293,7 +357,7 @@ Continue with installation? [y/N]y
 analysis-ik
 ```
 
-### 1.7.2 配置 IK 分词器(没特殊要求可以先不用配置)
+## 2.2 配置 IK 分词器(没特殊要求可以先不用配置)
 到 `elasticsearch/config/analysis-ik/` 下配置 `IKAnalyzer.cfg.xml`
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -316,7 +380,7 @@ vim custom/myDic.txt 添加：
 中华人民共和国
 ```
 
-### 1.7.3 使用
+## 2.3 使用
 不指定分析类型 `analyzer` 时使用的是默认的分词器，
 
 * 1 POST    http://cdh2:9200/yg/_analyze/
