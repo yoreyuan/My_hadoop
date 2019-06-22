@@ -531,3 +531,7 @@ Hadoop生态系统中的数据管理仍然缺乏过去几十年为商业RDBMS开
 \[13] T. Willhalm, N. Popovici, Y. Boshmaf, H. Plattner, A. Zeier, and J. Schaffner. SIMD-scan: ultra fast in- memory table scan using on-chip vector processing units. PVLDB, 2, 2009.
 
 <br/><br/>
+
+
+也欢迎访问我的博客 [Impala: A Modern, Open-Source SQL Engine for Hadoop （Impala：适用于Hadoop的现代开源SQL引擎）](https://blog.csdn.net/github_39577257/article/details/93366028)
+
