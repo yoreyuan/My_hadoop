@@ -5,11 +5,9 @@ import org.apache.kudu.Schema;
 import org.apache.kudu.Type;
 import org.apache.kudu.client.*;
 
+import java.text.SimpleDateFormat;
 import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
-import java.util.TimeZone;
+import java.util.*;
 
 /**
  *
@@ -32,7 +30,7 @@ public class TagTest {
     private static KuduClient kuduClient;
     private static KuduSession session;
 
-    public static void main0(String[] args) throws Exception {
+    public static void main(String[] args) throws Exception {
         // 设置时区，  map.put("CTT", "Asia/Shanghai");
         TimeZone.setDefault(TimeZone.getTimeZone(ZoneId.SHORT_IDS.get("CTT")));
         kuduClient = new KuduClient.KuduClientBuilder(KUDU_MASTERS).build();
@@ -128,14 +126,18 @@ public class TagTest {
 
     }
 
-    public static void main(String[] args) throws Exception {
+    public static void main2(String[] args) throws Exception {
         // 设置时区，  map.put("CTT", "Asia/Shanghai");
         TimeZone.setDefault(TimeZone.getTimeZone(ZoneId.SHORT_IDS.get("CTT")));
         kuduClient = new KuduClient.KuduClientBuilder(KUDU_MASTERS).build();
 
 //        alterTable("tag_5", 200);
 //        createTable("tag_5", 5);
-        insertTest("tag_5", 100000, 100);
+        // 1 千万 5529179 ms      删除：
+        // 1 千万 54258 ms
+        // 第一次3.1G   987万
+        // 第二次11G 1593万条
+        insertTest("tag_5", 100, 100);
     }
 
 
@@ -169,7 +171,7 @@ public class TagTest {
                 columns.add(new ColumnSchema.ColumnSchemaBuilder("id_"+i/5, Type.INT32).build());
             }
             columns.add(new ColumnSchema.ColumnSchemaBuilder("tag_name_"+i/5, Type.STRING).nullable(true).build());
-            columns.add(new ColumnSchema.ColumnSchemaBuilder("tagid_"+i/5, Type.STRING).nullable(true).build());
+            columns.add(new ColumnSchema.ColumnSchemaBuilder("tag_time_"+i/5, Type.UNIXTIME_MICROS).nullable(true).build());
             columns.add(new ColumnSchema.ColumnSchemaBuilder("uid_"+i/5, Type.DOUBLE).nullable(true).build());
             columns.add(new ColumnSchema.ColumnSchemaBuilder("weight_"+i/5, Type.INT8).defaultValue((byte)0).build());
         }
@@ -207,7 +209,7 @@ public class TagTest {
         for(int i=columnCount; i< columnCount + increColsNum; i+=5){
             ato.addColumn("id_"+i/5, Type.INT32, 0);
             ato.addColumn("tag_name_"+i/5, Type.STRING, "-");
-            ato.addColumn("tagid_"+i/5, Type.STRING, "-");
+            ato.addColumn("tag_time_"+i/5, Type.UNIXTIME_MICROS, "-");
             ato.addColumn("uid_"+i/5, Type.DOUBLE, 0.0);
             ato.addColumn("weight_"+i/5, Type.INT8, (byte)0);
         }
@@ -251,7 +253,7 @@ public class TagTest {
 
         Long start = System.currentTimeMillis();
         for(int i=0; i<rowNum; i++){
-            Insert insert = table.newInsert();
+            Upsert insert = table.newUpsert();
             PartialRow row = insert.getRow();
 
             // 插入列
@@ -264,7 +266,7 @@ public class TagTest {
 //                System.out.println(dm_tag);
                 row.addInt(j, i);
                 row.addString(j+1, dm_tag.getTag_name());
-                row.addString(j+2, dm_tag.getTagid());
+                row.addTimestamp(j+2, new java.sql.Timestamp(new Date().getTime()));
                 row.addDouble(j+3, dm_tag.getUid());
                 row.addByte(j+4, dm_tag.getWeight());
             }
@@ -391,26 +393,26 @@ public class TagTest {
     }
     private static final List<DM_tag> RandomDataGenerator = new ArrayList<DM_tag>(){
         {
-            add(new DM_tag("发展期", "_122_346", Math.random(), (byte)0));
-            add(new DM_tag("超高盈利", "_207_408", Math.random(), (byte)0));
-            add(new DM_tag("空仓偏好", "_37_398", Math.random(), (byte)0));
-            add(new DM_tag("钻石客户", "_37_398", Math.random(), (byte)0));
-            add(new DM_tag("周转率低", "_60_321", Math.random(), (byte)0));
-            add(new DM_tag("个人投资者", "_21_181", Math.random(), (byte)0));
-            add(new DM_tag("未进行操作", "_206_413", Math.random(), (byte)0));
-            add(new DM_tag("持股5~10股", "_47_1076", Math.random(), (byte)0));
-            add(new DM_tag("购买过金算盘", "_240_435", Math.random(), (byte)0));
-            add(new DM_tag("选股能力很差", "_208_367", Math.random(), (byte)0));
-            add(new DM_tag("择时能力很差", "_209_360", Math.random(), (byte)0));
-            add(new DM_tag("中等资产客户", "_160_249", Math.random(), (byte)0));
-            add(new DM_tag("可购买浙商汇银", "_241_437", Math.random(), (byte)0));
-            add(new DM_tag("可开通B股交易", "_241_1101", Math.random(), (byte)0));
-            add(new DM_tag("已开通沪港通", "_240_431", Math.random(), (byte)0));
-            add(new DM_tag("已开通期权交易", "_240_429", Math.random(), (byte)0));
-            add(new DM_tag("已开通融资融券", "_37_398", Math.random(), (byte)0));
-            add(new DM_tag("偏好权利方投资", "_182_318", Math.random(), (byte)0));
-            add(new DM_tag("已开通基金定投", "_240_427", Math.random(), (byte)0));
-            add(new DM_tag("单一持仓集中度较高", "_179_308", Math.random(), (byte)0));
+            add(new DM_tag("发展期"/*, "_122_346"*/, Math.random(), (byte)random.nextInt(100)));
+            add(new DM_tag("超高盈利"/*, "_207_408"*/, Math.random(), (byte)random.nextInt(100)));
+            add(new DM_tag("空仓偏好"/*, "_37_398"*/, Math.random(), (byte)random.nextInt(100)));
+            add(new DM_tag("钻石客户"/*, "_37_398"*/, Math.random(), (byte)random.nextInt(100)));
+            add(new DM_tag("周转率低"/*, "_60_321"*/, Math.random(), (byte)random.nextInt(100)));
+            add(new DM_tag("个人投资者"/*, "_21_181"*/, Math.random(), (byte)random.nextInt(100)));
+            add(new DM_tag("未进行操作"/*, "_206_413"*/, Math.random(), (byte)random.nextInt(100)));
+            add(new DM_tag("持股5~10股"/*, "_47_1076"*/, Math.random(), (byte)random.nextInt(100)));
+            add(new DM_tag("购买过金算盘"/*, "_240_435"*/, Math.random(), (byte)random.nextInt(100)));
+            add(new DM_tag("选股能力很差"/*, "_208_367"*/, Math.random(), (byte)random.nextInt(100)));
+            add(new DM_tag("择时能力很差"/*, "_209_360"*/, Math.random(), (byte)random.nextInt(100)));
+            add(new DM_tag("中等资产客户"/*, "_160_249"*/, Math.random(), (byte)random.nextInt(100)));
+            add(new DM_tag("可购买浙商汇银"/*, "_241_437"*/, Math.random(), (byte)random.nextInt(100)));
+            add(new DM_tag("可开通B股交易"/*, "_241_1101"*/, Math.random(), (byte)random.nextInt(100)));
+            add(new DM_tag("已开通沪港通"/*, "_240_431"*/, Math.random(), (byte)random.nextInt(100)));
+            add(new DM_tag("已开通期权交易"/*, "_240_429"*/, Math.random(), (byte)random.nextInt(100)));
+            add(new DM_tag("已开通融资融券"/*, "_37_398"*/, Math.random(), (byte)random.nextInt(100)));
+            add(new DM_tag("偏好权利方投资"/*, "_182_318"*/, Math.random(), (byte)random.nextInt(100)));
+            add(new DM_tag("已开通基金定投"/*, "_240_427"*/, Math.random(), (byte)random.nextInt(100)));
+            add(new DM_tag("单一持仓集中度较高"/*, "_179_308"*/, Math.random(), (byte)random.nextInt(100)));
         }
     } ;
 
@@ -418,13 +420,13 @@ public class TagTest {
     // int,string,string,double,byte
     static class DM_tag implements java.io.Serializable{
         private String tag_name;
-        private String tagid;
+        private Date tagtime;
         private Double uid;
         private Byte weight;
 
-        public DM_tag(String tag_name, String tagid, Double uid, Byte weight) {
+        public DM_tag(String tag_name, Double uid, Byte weight) {
             this.tag_name = tag_name;
-            this.tagid = tagid;
+//            this.tagtime = new Date();
             this.uid = uid;
             this.weight = weight;
         }
@@ -441,12 +443,12 @@ public class TagTest {
             this.tag_name = tag_name;
         }
 
-        public String getTagid() {
-            return tagid;
+        public Date getTagtime() {
+            return tagtime;
         }
 
-        public void setTagid(String tagid) {
-            this.tagid = tagid;
+        public void setTagtime(Date tagtime) {
+            this.tagtime = tagtime;
         }
 
         public Double getUid() {
@@ -469,10 +471,15 @@ public class TagTest {
         public String toString() {
             return "DM_tag{" +
                     ", tag_name='" + tag_name + '\'' +
-                    ", tagid='" + tagid + '\'' +
+                    ", tagid='" + formateData(tagtime) + '\'' +
                     ", uid=" + uid +
                     ", weight=" + weight +
                     '}';
+        }
+
+        private String formateData(Date d) {
+            SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            return sf.format(d);
         }
     }
 
