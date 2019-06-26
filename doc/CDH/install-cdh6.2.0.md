@@ -539,6 +539,27 @@ uuidgen > /etc/cloudera-scm-server/uuid
 ![cdh-web-01.png](img/cdh-web-01.png)
 
 
+这一步选择安装的版本，不同版本支持的主要功能已列出，第一列为Cloudera免费的快速体验版；第二列为Cloudera为企业级试用版（免费试用60天）；第三列是功能和服务最全的Cloudera企业版，是需要认证且收费的。
+Cloudera Express 和 Cloudera Enterprise 中的[可用功能的完整列表](https://www.cloudera.com/content/dam/www/marketing/resources/datasheets/cloudera-enterprise-datasheet.pdf.landing.html)。
+
+![cdh-web-03.png](img/cdh-web-03.png)
+
+选择第一列，快速体验版服务，完全免费，功能和服务对于需求不是很特殊和复杂的试用基本没什么问题，如果后期功能不够，或满足不了需求，想使用Cloudera的企业版也不用担心，
+在`Cloudera Manager`页面，点击页面头部的`管理`菜单，在下拉列表中单机`许可证`，可在页面上选择：<kbd>试用Cloudera Enterprise 60天</kbd> 、<kbd>升级至Cloudera Enterprise</kbd> ，
+更详细的升级说明可查看 [从Cloudera Express升级到Cloudera Enterprise](https://www.cloudera.com/documentation/enterprise/6/6.2/topics/cm_ag_licenses.html#cmug_topic_13_7__section_p2c_5xy_qm)
+
+选择第二列，可以直接免费体验`Cloudera Enterprise`全部功能60天，且这个每次只能试用一次，关于许可证到期或试用许可证的说明可访问 
+[Managing Licenses ➹](https://www.cloudera.com/documentation/enterprise/6/6.2/topics/cm_ag_licenses.html#cmug_topic_13_7__section_ed1_nz1_wr)
+
+选择第三列，使用**Cloudera企业版**，需要获取许可证，要获得Cloudera Enterprise许可证，请填写此[表单](https://www.cloudera.com/contact-sales.html)或致电**866-843-7207**。关于许可证的详细说明可以访问
+[Managing Licenses](https://www.cloudera.com/documentation/enterprise/6/6.2/topics/cm_ag_licenses.html#cmug_topic_13_7)。其功能和价格可参考 [功能和价格](https://www.cloudera.com/products/pricing/product-features.html) 页面。
+
+
+
+
+<br/><br/>
+
+
 #### 集群安装
 ![cdh-web-04.png](img/cdh-web-04.png)
 
