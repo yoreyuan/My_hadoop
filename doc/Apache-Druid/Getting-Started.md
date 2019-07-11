@@ -135,14 +135,18 @@ Broker修剪是Druid限制每个查询必须扫描的数据量的重要方式，
 
 ## 1.7 Ingestion overview（摄取概述）
 
+<br/>
+
 **********
+
+<br/>
 
 # 2 Getting Started （入门） 
 Apache Druid入门（孵化中）
 
 * Overview (概述)
-如果您不熟悉Druid，我们建议您先阅读[Design Overview](https://druid.apache.org/docs/latest/design/index.html)
-和[Ingestion Overview](https://druid.apache.org/docs/latest/ingestion/index.html)，以便对Druid有基本的了解。
+如果您不熟悉Druid，我们建议您先阅读[Design Overview](https://github.com/yoreyuan/My_hadoop/blob/master/doc/Apache-Druid/Getting-Started.md#getting-started-%E5%85%A5%E9%97%A8)
+和[Ingestion Overview](https://github.com/yoreyuan/My_hadoop/blob/master/doc/Apache-Druid/Data-Ingestion.md#1-ingestion-overview-%E6%91%84%E5%8F%96%E6%A6%82%E8%BF%B0)，以便对Druid有基本的了解。
 
 * Single-server Quickstart and Tutorials （单服务快速入门和指南）
 要开始运行Druid，最简单、最快捷的方法是尝试[single-server quickstart and tutorials](https://druid.apache.org/docs/latest/tutorials/index.html)。
@@ -161,9 +165,157 @@ Apache Druid入门（孵化中）
 ## 2.1 Single-server Quickstart （单服务快速入门）
 在本快速入门中，我们将下载Druid并在一台机器上进行设置。 完成此初始设置后，群集将准备好加载数据。
 
-在开始快速入门之前，阅读[Druid概述]()和[摄取概述]()是有帮助的，因为教程将参考这些页面上讨论的概念。
+在开始快速入门之前，阅读[Druid概述](https://github.com/yoreyuan/My_hadoop/blob/master/doc/Apache-Druid/Getting-Started.md#getting-started-%E5%85%A5%E9%97%A8)和
+[摄取概述](https://github.com/yoreyuan/My_hadoop/blob/master/doc/Apache-Druid/Data-Ingestion.md#1-ingestion-overview-%E6%91%84%E5%8F%96%E6%A6%82%E8%BF%B0)是有帮助的，
+因为教程将参考这些页面上讨论的概念。
 
+### 0 安装
+#### 0.1 Prerequisites （先决条件）
+##### 0.1.1 Software （软件）
+你将需要：
+* Java 8 (8u92+)
+* Linux, Mac OS X, 或者其他的类Unix OS (Windows是不支持的)
 
+##### 0.1.2 Hardware（硬件）
+Druid包括几个[单服务配置](https://github.com/yoreyuan/My_hadoop/blob/master/doc/Apache-Druid/Single-Server-Deployments.md)示例，以及使用这些配置启动Druid进程的脚本。
+
+如果您在笔记本电脑等小型机器上运行以进行快速评估，那么`micro-quickstart`配置是一个不错的选择，适用于 4CPU/16GB RAM环境。
+
+如果您计划在教程之外使用单机部署进行进一步评估，我们建议使用比`micro-quickstart`更大的配置。
+
+#### 0.2 Getting started （入门）
+[下载](https://druid.apache.org/downloads.html) [0.15.0-incubating](https://www.apache.org/dyn/closer.cgi?path=/incubator/druid/0.15.0-incubating/apache-druid-0.15.0-incubating-bin.tar.gz)版本。
+
+通过在终端中运行以下命令来解压Druid：
+```bash
+tar -xzf apache-druid-0.15.0-incubating-bin.tar.gz
+cd apache-druid-0.15.0-incubating
+```
+
+在包中，您应该找到：
+* `DISCLAIMER`, `LICENSE`, 和 `NOTICE` 文件
+* `bin/*` - 对快速入门有用的脚本
+* `conf/*` - 单服务和群集设置的示例配置
+* `extensions/*` - Druid核心扩展
+* `hadoop-dependencies/*` - Druid Hadoop 依赖
+* `lib/*` - Druid核心的库和依赖
+* `quickstart/*` - 快速入门教程的配置文件，示例数据和其他文件
+
+#### 0.3 Download Zookeeper （下载Zookeeper）
+Druid依赖[Apache ZooKeeper](http://zookeeper.apache.org/)进行分布式协调。您需要下载并运行Zookeeper。
+
+在程序包根目录中，运行以下命令：
+```bash
+curl https://archive.apache.org/dist/zookeeper/zookeeper-3.4.11/zookeeper-3.4.11.tar.gz -o zookeeper-3.4.11.tar.gz
+tar -xzf zookeeper-3.4.11.tar.gz
+mv zookeeper-3.4.11 zk
+```
+
+指南的启动脚本(bin/run-zk)将期望Zookeeper tarball位于apache-druid-0.15.0-incubating包根目录下。
+
+#### 0.4 Start up Druid services （启动Druid服务）
+以下命令将假定您使用的是`micro-quickstart`单机配置。 如果使用其他配置，则bin目录具有每个配置的等效脚本，例如`bin/start-single-server-small`。
+
+从apache-druid-0.15.0-incubating包根目录，运行以下命令：
+```bash
+./bin/start-micro-quickstart
+```
+
+这将启动Zookeeper和Druid服务的实例，所有这些都在本地机器上运行，例如：
+```
+$ ./bin/start-micro-quickstart 
+[Fri May  3 11:40:50 2019] Running command[zk], logging to[/apache-druid-0.15.0-incubating/var/sv/zk.log]: bin/run-zk conf
+[Fri May  3 11:40:50 2019] Running command[coordinator-overlord], logging to[/apache-druid-0.15.0-incubating/var/sv/coordinator-overlord.log]: bin/run-druid coordinator-overlord conf/druid/single-server/micro-quickstart
+[Fri May  3 11:40:50 2019] Running command[broker], logging to[/apache-druid-0.15.0-incubating/var/sv/broker.log]: bin/run-druid broker conf/druid/single-server/micro-quickstart
+[Fri May  3 11:40:50 2019] Running command[router], logging to[/apache-druid-0.15.0-incubating/var/sv/router.log]: bin/run-druid router conf/druid/single-server/micro-quickstart
+[Fri May  3 11:40:50 2019] Running command[historical], logging to[/apache-druid-0.15.0-incubating/var/sv/historical.log]: bin/run-druid historical conf/druid/single-server/micro-quickstart
+[Fri May  3 11:40:50 2019] Running command[middleManager], logging to[/apache-druid-0.15.0-incubating/var/sv/middleManager.log]: bin/run-druid middleManager conf/druid/single-server/micro-quickstart
+```
+
+所有持久状态（如集群元数据存储和segment服务）都将保存在apache-druid-0.15.0-incubating软件包根目录下的`var`目录中。 服务的日志位于`var/sv`。
+
+稍后，如果您想停止服务，请按CTRL-C退出`bin/start-micro-quickstart`脚本，这将终止Druid进程。
+
+群集启动后，您可以导航到[http//localhost:8888](http//localhost:8888)。 服务于Druid控制台的[Druid路由进程](https://druid.apache.org/docs/latest/development/router.html)驻留在此地址。
+
+![tutorial-quickstart-01.png](https://druid.apache.org/docs/latest/tutorials/img/tutorial-quickstart-01.png)
+
+所有Druid进程都需要几秒钟才能完全启动。如果在启动服务后立即打开控制台，您可能会看到一些可以安全忽略的错误。
+
+#### 0.5 Loading Data （加载数据）
+##### 0.5.1 Tutorial Dataset （教程数据集）
+对于以下数据加载教程，我们已经包含了一个示例数据文件，其中包含2015-09-12发生的Wikipedia页面的编辑事件。
+
+此示例数据位于Druid软件包根目录的`quickstart/tutorial/wikiticker-2015-09-12-sampled.json.gz`中。 页面编辑事件作为JSON对象存储在文本文件中。
+
+示例数据具有以下列，示例事件如下所示：
+* added
+* channel
+* cityName
+* comment
+* countryIsoCode
+* countryName
+* deleted
+* delta
+* isAnonymous
+* isMinor
+* isNew
+* isRobot
+* isUnpatrolled
+* metroCode
+* namespace
+* page
+* regionIsoCode
+* regionName
+* user
+
+```json
+{
+  "timestamp":"2015-09-12T20:03:45.018Z",
+  "channel":"#en.wikipedia",
+  "namespace":"Main",
+  "page":"Spider-Man's powers and equipment",
+  "user":"foobar",
+  "comment":"/* Artificial web-shooters */",
+  "cityName":"New York",
+  "regionName":"New York",
+  "regionIsoCode":"NY",
+  "countryName":"United States",
+  "countryIsoCode":"US",
+  "isAnonymous":false,
+  "isNew":false,
+  "isMinor":false,
+  "isRobot":false,
+  "isUnpatrolled":false,
+  "added":99,
+  "delta":99,
+  "deleted":0
+}
+
+```
+
+##### 0.5.2 Data loading tutorials （数据加载教程）
+以下教程演示了将数据加载到Druid中的各种方法，包括批处理和流式用例。 所有教程都假设您使用上面提到的`micro-quickstart`单机配置。
+
+* [Loading a file](https://druid.apache.org/docs/latest/tutorials/tutorial-batch.html) - 本教程演示了如何使用Druid的本机批量提取执行批处理文件加载。
+* [从Apache Kafka加载流数据](https://druid.apache.org/docs/latest/tutorials/tutorial-kafka.html) - 本教程演示了如何从Kafka topic加载流数据。
+* [使用Apache Hadoop加载文件](https://druid.apache.org/docs/latest/tutorials/tutorial-batch-hadoop.html) - 本教程演示了如何使用远程Hadoop集群执行批处理文件加载。
+* [使用Tranquility加载数据](https://druid.apache.org/docs/latest/tutorials/tutorial-tranquility.html) - 本教程演示了如何使用Tranquility服务将事件推送到Druid来加载流数据。
+* [编写自己的提取规范](https://druid.apache.org/docs/latest/tutorials/tutorial-ingestion-spec.html) - 本教程演示了如何编写新的提取规范并使用它来加载数据。
+
+##### 0.5.3 Resetting cluster state （重置集群状态）
+如果要在停止服务后进行干净启动，请删除`var`目录并再次运行`bin/start-micro-quickstart`脚本。
+
+一旦每个服务启动后，您就可以加载数据了。
+
+###### Resetting Kafka （重置Kafka） 
+如果您完成了[教程：从Kafka加载流数据](https://druid.apache.org/docs/latest/tutorials/tutorial-kafka.html)并希望重置群集状态，你需要另外清除任何Kafka状态。
+
+在停止Zookeeper和Druid服务之前，使用CTRL-C关闭Kafka代理，然后删除 /tmp/kafka-logs中的Kafka日志目录：
+
+```bash
+rm -rf /tmp/kafka-logs
+```
 
 ## 2.2 Clustering （集群）
 
