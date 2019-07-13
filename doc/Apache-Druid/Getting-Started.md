@@ -604,10 +604,10 @@ Apache Druid（孵化中）旨在部署为可扩展的容错集群。
 在生产中，我们建议根据您的特定容错需求在容错配置中部署多个主服务器和多个查询服务器，但您可以使用一个主服务器和一个查询服务器快速入门，并在以后添加更多服务器。
 
 ### 1 Select hardware （硬件选择）
-#### 1.1 新部署
+#### 1.1 Fresh Deployment （新部署）
 如果您没有现有的Druid集群，并希望在集群部署中开始运行Druid，本指南提供了一个带有预制配置的示例集群部署。
 
-#### 1.2 Master服务
+#### 1.2 Master Server （Master服务）
 Coordinator和Overlord进程负责处理集群的元数据和协调需求。 它们可以在同一服务器上共同放置。
 
 在此示例中，我们将部署相当于一个AWS [m5.2xlarge](https://aws.amazon.com/ec2/instance-types/m5/)实例。
