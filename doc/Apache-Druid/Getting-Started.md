@@ -586,10 +586,399 @@ curl -X 'POST' -H 'Content-Type:application/json' -d @quickstart/tutorial/wikipe
 
 ### 12 Tutorial: Transforming input data （教程：转换输入数据）
 
+<br/>
 
-
-
+**********
 
 ## 2.2 Clustering （集群）
+## Setting up a Clustered Deployment （集群设置部署）
+Apache Druid（孵化中）旨在部署为可扩展的容错集群。
+
+在本文档中，我们将设置一个简单的集群，并讨论如何进一步配置以满足您的需求。
+
+这个简单的集群将具有以下特点： 
+- 用于承载Coordinator和Overlord进程的Master服务
+- 两个可伸缩的容错数据服务器，Historical和MiddleManager进程 
+- 一个查询服务器，托管Druid Broker和Router进程
+
+在生产中，我们建议根据您的特定容错需求在容错配置中部署多个主服务器和多个查询服务器，但您可以使用一个主服务器和一个查询服务器快速入门，并在以后添加更多服务器。
+
+### 1 Select hardware （硬件选择）
+#### 1.1 新部署
+如果您没有现有的Druid集群，并希望在集群部署中开始运行Druid，本指南提供了一个带有预制配置的示例集群部署。
+
+#### 1.2 Master服务
+Coordinator和Overlord进程负责处理集群的元数据和协调需求。 它们可以在同一服务器上共同放置。
+
+在此示例中，我们将部署相当于一个AWS [m5.2xlarge](https://aws.amazon.com/ec2/instance-types/m5/)实例。
+
+该硬件提供：- 8 vCPUs - 31 GB RAM
+
+示例已为此硬件调整大小的Master服务配置可在`conf/druid/cluster/master`下找到。
+
+#### 1.3 Data Server （数据服务）
+可以在同一服务器上并置Historicals和MiddleManagers来处理群集中的实际数据。 这些服务器从CPU，RAM和SSD中受益匪浅。
+
+在此示例中，我们将部署两个AWS [i3.4xlarge](https://aws.amazon.com/ec2/instance-types/i3/)实例的等效项。
+
+这个硬件提供：
+* 16 vCPUs
+* 122 GB RAM
+* 2 * 1.9TB SSD 存储
+
+示例已针对此硬件调整大小的数据服务器配置可在`conf/druid/cluster/data`下找到。
+
+#### 1.4 Query Server （查询服务）
+Druid Broker接受查询并将其分配给群集的其余部分。 他们还可以选择维护内存中的查询缓存。 这些服务器受益于CPU和RAM。
+
+在此示例中，我们将部署相当于一个AWS [m5.2xlarge](https://aws.amazon.com/ec2/instance-types/m5/)实例。
+
+该硬件提供：- 8 vCPUs - 31 GB RAM
+
+您可以考虑在运行Broker的同一服务上运行同一位置任何打开source UI或查询库。
+
+示例可以在`conf/druid/cluster/query`下找到已针对此硬件调整大小的查询服务器配置。
+
+
+#### 1.5 Other Hardware Sizes （其他硬件大小）
+上面的示例被选为一个电节点例子的集群，可用于确定Druid集群的大小。
+
+您可以根据具体需求和约束选择较小/较大的硬件或更少/更多的服务器。
+
+如果您的用例具有复杂的扩展要求，您还可以选择不再一起的Druid进程（例如，独立的Historical服务器）。
+
+[basic cluster tuning guide](https://druid.apache.org/docs/latest/operations/basic-cluster-tuning.html)中的信息可以帮助您制定决策流程并调整配置大小。
+
+### 2 Migrating from a Single-Server Deployment （从单服务部署迁移）
+如果您具有现有的单服务部署（例如来自[single-server deployment examples](https://github.com/yoreyuan/My_hadoop/blob/master/doc/Apache-Druid/Getting-Started.md#21-single-server-quickstart-%E5%8D%95%E6%9C%8D%E5%8A%A1%E5%BF%AB%E9%80%9F%E5%85%A5%E9%97%A8)），
+并且您希望迁移到类似规模的集群部署，则以下部分包含使用 Master/Data/Query 服务组织结构。
+
+#### 2.1  Master Server
+Master Server的主要考虑因素是Coordinator和Overlord的可用CPU和RAM。
+
+从单服务部署中总结协调器和宿主的分配堆大小，并选择具有足够RAM的主服务器硬件用于组合堆，并为机器上的其他进程选择一些额外的RAM。
+
+对于CPU内核，您可以选择具有单服务器部署核心大约1/4的硬件。
+
+#### 2.2 Data Server（数据服务）
+为群集选择数据服务器硬件时，主要考虑因素是CPU和RAM，如果可行，则使用SSD存储。
+
+在集群部署中，拥有多个数据服务器是出于容错目的的好想法。
+
+选择数据服务器硬件时，可以选择拆分因子N，将单服务器部署的原始 CPU/RAM 除以N，并在新集群中部署N个缩小的数据服务器。
+
+有关调整分割的Historical/MiddleManager 配置的说明，请参阅本指南的后续部分。
+
+#### 2.3 Query Server （查询服务）
+查询服务器的主要注意事项是 Broker堆内存 + 直接内存 和 Router堆内存的可用CPU和RAM。
+
+从单服务器部署中总结为Broker和Router分配的内存大小，并选择具有足够RAM的查询服务器硬件来覆盖 Broker/Router，并为机器上的其他进程添加一些额外的RAM。
+
+对于CPU内核，您可以选择具有单服务器部署核心大约1/4的硬件。
+
+[basic cluster tuning guide](https://druid.apache.org/docs/latest/operations/basic-cluster-tuning.html)包含有关如何计算 Broker/Router 内存使用情况的信息。
+
+### 3 Select OS （选择操作系统）
+我们建议运行您喜欢的Linux发行版。您还需要：
+* Java 8
+
+您的OS包管理器应该能够为两个Java提供帮助。 如果您的基于Ubuntu的操作系统没有最新版本的Java，则WebUpd8会为[这些操作系统提供软件包](http://www.webupd8.org/2012/09/install-oracle-java-8-in-ubuntu-via-ppa.html)。
+
+### 4 Download the distribution （下载发行版）
+首先，下载并解压缩发布版存档包。 最好先在一台机器上执行此操作，因为您将编辑配置，然后将修改后的分发包复制到所有服务器。
+
+[下载](https://www.apache.org/dyn/closer.cgi?path=/incubator/druid/0.15.0-incubating/apache-druid-0.15.0-incubating-bin.tar.gz) 0.15.0-incubating  版本。
+
+通过在终端中运行以下命令来解压Druid：
+```bash
+tar -xzf apache-druid-0.15.0-incubating-bin.tar.gz
+cd apache-druid-0.15.0-incubating
+```
+在包中，您应该找到：
+* `DISCLAIMER`, `LICENSE`, 和 `NOTICE` 文件
+* `bin/*` - 对快速入门有用的脚本
+* `conf/*` - 单服务和群集设置的示例配置
+* `extensions/*` - Druid核心扩展
+* `hadoop-dependencies/*` - Druid Hadoop 依赖
+* `lib/*` - Druid核心的库和依赖
+* `quickstart/*` - 快速入门教程的配置文件，示例数据和其他文件
+
+#### 4.1 Migrating from Single-Server Deployments （从单服务部署迁移）
+在以下部分中，我们将编辑`conf/druid/cluster`下的配置。
+
+如果您有现有的单服务器部署，请将您现有的配置复制到`conf/druid/cluster`以保留您所做的任何配置更改。
+
+### 5 Configure metadata storage and deep storage （配置元数据存储和深存储）
+#### 5.1 Migrating from Single-Server Deployments（从电服务部署迁移）
+如果您有现有的单服务器部署，并且希望在迁移过程中保留数据，请在更新 元数据/深存储 配置之前按照[元数据迁移](https://druid.apache.org/docs/latest/operations/metadata-migration.html)和[深存储迁移](https://druid.apache.org/docs/latest/operations/deep-storage-migration.html)的说明进行操作。
+
+这些指南针对使用Derby元数据存储和本地深存储的单服务器部署。 如果您已在单服务器群集中使用非Derby元数据存储，则可以为新群集重用现有元数据存储。
+
+这些指南还提供有关从本地深存储迁移segment的信息。 集群部署需要分布式深存储，如S3或HDFS。 如果您的单服务器部署已使用分布式深存储，则可以将现有深存储重用于新群集。
+
+#### 5.2 Metadata Storage （元数据存储）
+在`conf/druid/cluster/_common/common.runtime.properties`中，将"metadata.storage.*"替换为您将用作元数据存储的计算机的地址：
+* druid.metadata.storage.connector.connectURI
+* druid.metadata.storage.connector.host
+
+在生产部署中，我们建议运行专用的元数据存储，例如带有复制的MySQL或PostgreSQL，与Druid服务器分开部署。
+
+[MySQL extension](https://druid.apache.org/docs/latest/development/extensions-core/mysql.html)和[PostgreSQL extension](https://druid.apache.org/docs/latest/development/extensions-core/postgresql.html)文档具有扩展配置和初始数据库设置的说明。
+
+#### 5.2 Deep Storage （深存储）
+Druid依赖于分布式文件系统或大型对象（blob）存储来进行数据存储。 最常用的深存储实现是S3（适用于AWS上的那些）和HDFS（如果您已经有Hadoop部署，那很流行）。
+
+#### 5.3 S3
+在`conf/druid/cluster/_common/common.runtime.properties`
+* 添加 "druid-s3-extensions" 到 `druid.extensions.loadList`。
+* 在"Deep Storage" 和 "Indexing service logs"下注释掉本地存储的配置。
+* 取消注释并在 "Deep Storage" 和 "Indexing service logs" 的 "For S3" 部分中配置适当的值。
+
+在此之后，您应该进行以下更改：
+```yaml
+druid.extensions.loadList=["druid-s3-extensions"]
+
+#druid.storage.type=local
+#druid.storage.storageDirectory=var/druid/segments
+
+druid.storage.type=s3
+druid.storage.bucket=your-bucket
+druid.storage.baseKey=druid/segments
+druid.s3.accessKey=...
+druid.s3.secretKey=...
+
+#druid.indexer.logs.type=file
+#druid.indexer.logs.directory=var/druid/indexing-logs
+
+druid.indexer.logs.type=s3
+druid.indexer.logs.s3Bucket=your-bucket
+druid.indexer.logs.s3Prefix=druid/indexing-logs
+```
+
+更多信息请查看[S3 extension](https://druid.apache.org/docs/latest/development/extensions-core/s3.html)文档。
+
+#### 5.4 HDFS
+在`conf/druid/cluster/_common/common.runtime.properties`
+* 添加 "druid-hdfs-storage" 到 `druid.extensions.loadList`。
+* 在"Deep Storage" 和 "Indexing service logs"下注释掉本地存储配置。
+* 取消注释并在"Deep Storage" 和 "Indexing service logs"的"For HDFS"部分中配置适当的值。
+
+在此之后，您应该进行以下更改：
+```yaml
+druid.extensions.loadList=["druid-hdfs-storage"]
+
+#druid.storage.type=local
+#druid.storage.storageDirectory=var/druid/segments
+
+druid.storage.type=hdfs
+druid.storage.storageDirectory=/druid/segments
+
+#druid.indexer.logs.type=file
+#druid.indexer.logs.directory=var/druid/indexing-logs
+
+druid.indexer.logs.type=hdfs
+druid.indexer.logs.directory=/druid/indexing-logs
+```
+
+另外也要，
+* 将Hadoop配置的XML（core-site.xml, hdfs-site.xml, yarn-site.xml, mapred-site.xml）放在Druid进程的类路径中。 您可以通过将它们复制到`conf/druid/cluster/_common/`来完成此操作。
+
+有关详细信息，请参阅[HDFS扩展文档](https://druid.apache.org/docs/latest/development/extensions-core/hdfs.html)。
+
+### 6 Configure Tranquility Server (optional) （配置Tranquility Server(可选) ）
+数据流可以通过由Tranquility Server简单的提供支持HTTP API发送给Druid。如果您将使用此功能，那么此时您应该[配置Tranquility Server](https://druid.apache.org/docs/latest/ingestion/stream-ingestion.html#server)。
+
+### 7 Configure for connecting to Hadoop (optional) （连接Hadoop配置(可选)）
+如果您要从Hadoop集群加载数据，那么此时您应该配置Druid以了解您的集群：
+
+* 将`conf/druid/cluster/middleManager/runtime.properties`中的`druid.indexer.task.hadoopWorkingPath`更新为HDFS上的路径，
+您希望将其用于索引进程所需的临时文件。 `druid.indexer.task.hadoopWorkingPath=/tmp/druid-indexing`是一种常见的选择。
+
+**注意**： 这里应该是文档未来得及更新， `conf/druid/cluster/middleManager/runtime.properties`应该为`conf/druid/cluster/data/middleManager/runtime.properties`
+
+将Hadoop配置的XML(core-site.xml, hdfs-site.xml, yarn-site.xml, mapred-site.xml) 放在Druid进程的类路径中。 您可以通过将它们复制到`conf/druid/cluster/_common/core-site.xml`，`conf/druid/cluster/_common/hdfs-site.xml`等来完成此操作。
+
+请注意，您不需要使用HDFS深存储来从Hadoop加载数据。 例如，如果您的群集在Amazon Web Services上运行，我们建议您使用S3进行深存储，即使您使用Hadoop或Elastic MapReduce加载数据也是如此。
+
+有关详细信息，请参阅[batch ingestion](https://druid.apache.org/docs/latest/ingestion/batch-ingestion.html)。
+
+### 8 Configure Zookeeper connection （配置Zookeeper连接）
+在生产群集中，我们建议在法定人数(quorum)中使用专用ZK群集，与Druid服务器分开部署。
+
+在`conf/druid/cluster/_common/common.runtime.properties`中，将`druid.zk.service.host`设置为包含逗号分隔的列表 host:port对的连接字符串，
+每个对应于ZK quorum的ZooKeeper服务。 (流入 "127.0.0.1:4545" 或 "127.0.0.1:3000,127.0.0.1:3001,127.0.0.1:3002")
+
+您还可以选择在主服务器上运行ZK，而不是使用专用的ZK群集。 如果这样做，我们建议部署3个主服务器，以便您具有ZK quorum。
+
+### 9 Configuration Tuning （配置调整）
+#### 9.1 Migrating from a Single-Server Deployment （从单服务部署迁移）
+##### 9.1.1 Master
+如果您使用的是单服务器部署示例中的示例配置，则这些示例将Coordinator和Overlord进程组合到一个组合进程中。
+
+`conf/druid/cluster/master/coordinator-overlord`下的示例配置也结合了Coordinator和Overlord进程。
+
+您可以将现有的`coordinator-overlord`配置从单服务器部署复制到`conf/druid/cluster/master/coordinator-overlord`。
+
+##### 9.1.2 Data
+假设我们从具有32个CPU和256GB RAM的单服务器部署进行迁移。 在旧部署中，应用了Historicals和MiddleManagers的以下配置：
+
+Historical (Single-server) 
+```yaml
+druid.processing.buffer.sizeBytes=500000000 
+druid.processing.numMergeBuffers=8 
+druid.processing.numThreads=31
+``` 
+
+MiddleManager (Single-server) 
+```yaml
+druid.worker.capacity=8 
+druid.indexer.fork.property.druid.processing.numMergeBuffers=2 
+druid.indexer.fork.property.druid.processing.buffer.sizeBytes=100000000 
+druid.indexer.fork.property.druid.processing.numThreads=1
+```
+
+在集群部署中，我们可以选择拆分因子（本例中为2），并部署2个数据服务器，每个服务器具有16CPU和128GB RAM。 规模范围如下：
+
+Historical 
+-  `druid.processing.numThreads`：基于新硬件设置为 (num_cores - 1) 
+-  `druid.processing.numMergeBuffers`：用分割因子除去单服务器部署中的旧值 
+-  `druid.processing.buffer.sizeBytes`： 保持不变
+
+MiddleManager： 
+-  `druid.worker.capacity`：用分割因子除以单服务器部署的旧值 
+-  `druid.indexer.fork.property.druid.processing.numMergeBuffers`：保持不变 
+-  `druid.indexer.fork.property。 druid.processing.buffer.sizeBytes`：保持不变 
+-  `druid.indexer.fork.property.druid.processing.numThreads`：保持不变
+
+切分后产生的配置:
+
+新的 Historical (on 2 Data servers) 
+```yaml
+druid.processing.buffer.sizeBytes=500000000 
+druid.processing.numMergeBuffers=8 
+druid.processing.numThreads=31
+```
+
+新的 MiddleManager (on 2 Data servers) 
+```yaml
+druid.worker.capacity=4 
+druid.indexer.fork.property.druid.processing.numMergeBuffers=2 
+druid.indexer.fork.property.druid.processing.buffer.sizeBytes=100000000 
+druid.indexer.fork.property.druid.processing.numThreads=1
+```
+
+##### 9.1.3 Query
+您可以将现有的Broker和Router配置复制到`conf/druid/cluster/query`下的目录，只要新硬件的大小相应其他的不需要修改。
+
+#### 9.2 Fresh deployment （更新部署）
+如果您使用上述示例群集： 
+-  1个 Master server （m5.2xlarge） 
+-  2个Data servers （i3.4xlarge） 
+-  1个Query server（m5.2xlarge）
+
+`conf/druid/cluster`下的配置已针对此硬件进行了调整，您无需对一般用例进行进一步修改。
+
+如果您选择了不同的硬件，则[basic cluster tuning guide](https://druid.apache.org/docs/latest/operations/basic-cluster-tuning.html)可帮助您调整配置大小。
+
+### 10 Open ports (if using a firewall) （开放端口(如果使用了防火墙)）
+如果您使用的是防火墙或其他系统仅允许其特定端口通过，请允许以下内容的入站：
+
+#### 10.1 Master Server （Master服务）
+* 1527 （Derby元数据存储;如果您使用单独的元数据存储，如MySQL或PostgreSQL，则不需要）
+* 2181 (ZooKeeper; 如果您使用单独的ZooKeeper集群则不需要)
+* 8081 (Coordinator)
+* 8090 (Overlord)
+
+#### 10.2 Data Server （数据服务）
+* 8083 (Historical)
+* 8091, 8100–8199 （Druid Middle Manager;如果你有一个非常高级的`druid.worker.capacity`，你可能需要高于8199的端口号）
+
+#### 10.3 Query Server （查询服务）
+* 8082 (Broker)
+* 8088 (Router, 如果使用了)
+
+#### 10.4 Other （其他）
+* 8200 (Tranquility Server, 如果使用了)
+
+**注意** 在生产中，我们建议在自己的专用硬件上而不是在主服务器上部署ZooKeeper和元数据存储。
+
+### 11 Start Master Server （启动Master服务）
+将Druid发行版和您编辑的配置复制到 Master server。
+
+如果您一直在本地计算机上编辑配置，则可以使用rsync复制它们：
+```bash
+rsync -az apache-druid-0.15.0-incubating/ MASTER_SERVER:apache-druid-0.15.0-incubating/
+```
+
+#### 11.1 No Zookeper on Master （在Master上没有Zookeeper）
+从发行版根目录，运行以下命令以启动 Master server：
+
+```bash
+bin/start-cluster-master-no-zk-server
+```
+
+#### 11.2 With Zookeper on Master （在Master上使用Zookeeper）
+如果您计划在Master servers上运行ZK，请首先更新`conf/zoo.cfg`以反映您计划如何运行ZK。 然后登录到Master servers并安装Zookeeper：
+```bash
+curl http://www.gtlib.gatech.edu/pub/apache/zookeeper/zookeeper-3.4.11/zookeeper-3.4.11.tar.gz -o zookeeper-3.4.11.tar.gz
+tar -xzf zookeeper-3.4.11.tar.gz
+mv zookeeper-3.4.11 zk
+```
+
+如果在Master server上运行ZK，则可以使用以下命令与ZK一起启动Master server进程：
+```bash
+bin/start-cluster-master-with-zk-server
+```
+
+**注意** 在生产中，我们还建议在自己的专用硬件上运行ZooKeeper集群。
+
+### 12 Start Data Server （启动数据服务）
+将Druid发行版和您编辑的配置复制到 Data Server。
+
+从发行版根目录运行以下命令以启动Data Server：
+```bash
+bin/start-cluster-data-server
+```
+
+您可以根据需要添加更多数据服务器。
+
+**注意** 对于具有复杂资源分配需求的群集，您可以拆分Historicals和MiddleManagers并单独扩展组件。 这也允许您利用Druid内置的MiddleManager自动缩放
+
+#### 12.1 Tranquility 
+如果您使用Kafka或HTTP进行基于推送的流提取，您还可以在Data server上启动Tranquility Server。
+
+对于大规模生产，Data server进程和Tranquility Server仍然可以共存。
+
+如果您使用流处理运行Tranquility（而非服务），则可以将Tranquility与流处理共同协作，而不需要Tranquility Server。
+
+首先安装Tranquility：
+```bash
+curl http://static.druid.io/tranquility/releases/tranquility-distribution-0.8.3.tgz -o tranquility-distribution-0.8.3.tgz
+tar -xzf tranquility-distribution-0.8.3.tgz
+mv tranquility-distribution-0.8.3 tranquility
+```
+
+然后，在`conf/supervise/cluster/data.conf`中，取消注释`tranquility-server`行，然后重新启动 Data server进程。
+
+### 13 Start Query Server （启动查询服务）
+将Druid发行版和您编辑的配置复制到Query Server。
+
+从发行版根目录运行以下命令以启动Query Server：
+```bash
+bin/start-cluster-query-server
+```
+
+您可以根据查询负载的需要添加更多Query server。 如果增加Query server的数量，请确保按照[basic cluster tuning guide](https://druid.apache.org/docs/latest/operations/basic-cluster-tuning.html)中的说明调整Historicals和任务上的连接池。
+
+### 14 Loading data （加载数据）
+恭喜你，你现在拥有一个Druid集群！ 下一步是了解使用推荐的方式将数据加载到Druid中。 了解更多[loading data](https://druid.apache.org/docs/latest/ingestion/index.html)。
+
+
+<br/>
+
+**********
+
+### 2 Migrating from a Single-Server Deployment
+
 
 ## 2.3 Further examples （更多案例）
