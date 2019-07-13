@@ -141,7 +141,7 @@ Broker修剪是Druid限制每个查询必须扫描的数据量的重要方式，
 
 <br/>
 
-# 2 Getting Started （入门） 
+# 2 [Getting Started](https://druid.apache.org/docs/latest/operations/getting-started.html) （入门） 
 Apache Druid入门（孵化中）
 
 * Overview (概述)
@@ -162,7 +162,7 @@ Apache Druid入门（孵化中）
 * Need help with Druid? （需要Druid的帮助吗？）
 如果您对使用Druid有疑问，请联系[Druid user mailing list or other community channels](https://druid.apache.org/community/)！
 
-## 2.1 Single-server Quickstart （单服务快速入门）
+## 2.1 [Single-server Quickstart](https://druid.apache.org/docs/latest/tutorials/index.html) （单服务快速入门）
 在本快速入门中，我们将下载Druid并在一台机器上进行设置。 完成此初始设置后，群集将准备好加载数据。
 
 在开始快速入门之前，阅读[Druid概述](https://github.com/yoreyuan/My_hadoop/blob/master/doc/Apache-Druid/Getting-Started.md#getting-started-%E5%85%A5%E9%97%A8)和
@@ -321,7 +321,7 @@ rm -rf /tmp/kafka-logs
 
 **********
 
-### 1 Tutorial: Loading a file （教程：加载文件）
+### 1 [Tutorial: Loading a file](https://druid.apache.org/docs/latest/tutorials/tutorial-batch.html) （教程：加载文件）
 本教程演示了如何使用Apache Druid（孵化中）的本机批处理提取来执行批处理文件加载。
 
 对于本教程，我们假设您已经使用`micro-quickstart`单机配置[快速入门](https://github.com/yoreyuan/My_hadoop/blob/master/doc/Apache-Druid/Getting-Started.md#21-single-server-quickstart-%E5%8D%95%E6%9C%8D%E5%8A%A1%E5%BF%AB%E9%80%9F%E5%85%A5%E9%97%A8)
@@ -518,25 +518,25 @@ curl -X 'POST' -H 'Content-Type:application/json' -d @quickstart/tutorial/wikipe
 
 **********
 
-### 2 Tutorial: Loading stream data from Apache Kafka （教程：从Apache Kafka加载流数据）
+### 2 [Tutorial: Loading stream data from Apache Kafka]() （教程：从Apache Kafka加载流数据）
 
 <br/>
 
 **********
 
-### 3 Tutorial: Loading a file using Apache Hadoop （教程：使用Apache Hadoop加载文件）
+### 3 [Tutorial: Loading a file using Apache Hadoop]() （教程：使用Apache Hadoop加载文件）
 
 <br/>
 
 **********
 
-### 4 Tutorial: Loading stream data using HTTP push （教程：使用HTTP推送加载流数据）
+### 4 [Tutorial: Loading stream data using HTTP push]() （教程：使用HTTP推送加载流数据）
 
 <br/>
 
 **********
 
-### 5 Tutorial: Querying data （教程：查询数据）
+### 5 [Tutorial: Querying data]() （教程：查询数据）
 
 <br/>
 
@@ -544,53 +544,53 @@ curl -X 'POST' -H 'Content-Type:application/json' -d @quickstart/tutorial/wikipe
 
 ### Further tutorials
 
-### 6 Tutorial: Rollup （教程：汇总）
+### 6 [Tutorial: Rollup]() （教程：汇总）
 
 
 <br/>
 
 **********
 
-### 7 Tutorial: Configuring retention （教程：保留配置）
+### 7 [Tutorial: Configuring retention]() （教程：保留配置）
 
 
 <br/>
 
 **********
 
-### 8 Tutorial: Updating existing data （教程：更新现有数据）
+### 8 [Tutorial: Updating existing data]() （教程：更新现有数据）
 
 
 <br/>
 
 **********
 
-### 9 Tutorial: Compacting segments （教程：segment压缩）
+### 9 [Tutorial: Compacting segments]() （教程：segment压缩）
 
 
 <br/>
 
 **********
 
-### 10 Tutorial: Deleting data （教程：删除数据）
+### 10 [Tutorial: Deleting data]() （教程：删除数据）
 
 <br/>
 
 **********
 
-### 11 Tutorial: Writing your own ingestion specs （教程：编写你自己的摄取规范）
+### 11 [Tutorial: Writing your own ingestion specs]() （教程：编写你自己的摄取规范）
 
 <br/>
 
 **********
 
-### 12 Tutorial: Transforming input data （教程：转换输入数据）
+### 12 [Tutorial: Transforming input data]() （教程：转换输入数据）
 
 <br/>
 
 **********
 
-## 2.2 Clustering （集群）
+## 2.2 [Clustering](https://druid.apache.org/docs/latest/tutorials/cluster.html) （集群）
 ## Setting up a Clustered Deployment （集群设置部署）
 Apache Druid（孵化中）旨在部署为可扩展的容错集群。
 
@@ -725,10 +725,10 @@ cd apache-druid-0.15.0-incubating
 
 [MySQL extension](https://druid.apache.org/docs/latest/development/extensions-core/mysql.html)和[PostgreSQL extension](https://druid.apache.org/docs/latest/development/extensions-core/postgresql.html)文档具有扩展配置和初始数据库设置的说明。
 
-#### 5.2 Deep Storage （深存储）
+#### 5.3 Deep Storage （深存储）
 Druid依赖于分布式文件系统或大型对象（blob）存储来进行数据存储。 最常用的深存储实现是S3（适用于AWS上的那些）和HDFS（如果您已经有Hadoop部署，那很流行）。
 
-#### 5.3 S3
+#### 5.4 S3
 在`conf/druid/cluster/_common/common.runtime.properties`
 * 添加 "druid-s3-extensions" 到 `druid.extensions.loadList`。
 * 在"Deep Storage" 和 "Indexing service logs"下注释掉本地存储的配置。
@@ -757,7 +757,7 @@ druid.indexer.logs.s3Prefix=druid/indexing-logs
 
 更多信息请查看[S3 extension](https://druid.apache.org/docs/latest/development/extensions-core/s3.html)文档。
 
-#### 5.4 HDFS
+#### 5.5 HDFS
 在`conf/druid/cluster/_common/common.runtime.properties`
 * 添加 "druid-hdfs-storage" 到 `druid.extensions.loadList`。
 * 在"Deep Storage" 和 "Indexing service logs"下注释掉本地存储配置。
@@ -978,7 +978,7 @@ bin/start-cluster-query-server
 
 **********
 
-### 2 Migrating from a Single-Server Deployment
+### 2 [Migrating from a Single-Server Deployment]()
 
 
-## 2.3 Further examples （更多案例）
+## 2.3 [Further examples]() （更多案例）
