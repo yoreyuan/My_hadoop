@@ -1,7 +1,7 @@
 Data Ingestion （数据摄取）
 ======
 
-# 1 Ingestion overview （摄取概述）
+# 1 [Ingestion overview](https://druid.apache.org/docs/latest/ingestion/index.html) （摄取概述）
 
 ## 1.1 Datasources and segments
 Apache Druid(孵化中)数据存储在“datasources”中，类似于传统RDBMS中的表。每个datasource按时间划分，并可选择进一步按其他属性划分。每个时间范围称为“chunk”（例如，如果您的datasource按天分区，则为一天）。
