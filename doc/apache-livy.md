@@ -28,14 +28,22 @@ Apache Livy还简化了Spark与应用程序服务器之间的交互，从而使S
  cd apache-livy-0.6.0-incubating-bin
 ```
 
-## 2.3 释放配置文件
+## 2.3 配置环境变量
+```bash
+vim ~/.bash_profile
+# set Livy environment
+export LIVY_HOME=/opt/apache-livy-0.6.0-incubating-bin
+export PATH=$PATH:$LIVY_HOME/bin
+```
+
+## 2.4 拷贝出配置文件
 将模板配置文件复制成配置文件
 ```bash
-cp livy-client.conf.template livy-client.conf
-cp livy.conf.template livy.conf
-cp livy-env.sh.template livy-env.sh
-cp log4j.properties.template log4j.properties
-cp spark-blacklist.conf.template spark-blacklist.conf
+cp $LIVY_HOME/conf/livy-client.conf.template $LIVY_HOME/conf/livy-client.conf
+cp $LIVY_HOME/conf/livy.conf.template $LIVY_HOME/conf/livy.conf
+cp $LIVY_HOME/conf/livy-env.sh.template $LIVY_HOME/conf/livy-env.sh
+cp $LIVY_HOME/conf/log4j.properties.template $LIVY_HOME/conf/log4j.properties
+cp $LIVY_HOME/conf/spark-blacklist.conf.template $LIVY_HOME/conf/spark-blacklist.conf
 ```
 
 配置文件说明：
@@ -44,34 +52,33 @@ cp spark-blacklist.conf.template spark-blacklist.conf
 * **log4j.properties**：Livy日志记录的配置。 定义日志级别以及将写入日志消息的位置。 默认配置模板将日志消息打印到stderr。
 
 ## 2.4 配置`livy-env.sh`
-这里主要配置下Spark和Hadoop的信息，也可以将hadoop配置放置到配置的路径上
+这里主要配置下Spark和Hadoop的信息
 ```bash
+vim $LIVY_HOME/conf/livy-env.sh
+# 添加如下配置，保存并退出
 export JAVA_HOME=/usr/local/zulu8
-export SPARK_HOME=/opt/spark-2.4.0
+export SPARK_HOME=/opt/spark-2.4.3
+export SPARK_CONF_DIR=$SPARK_HOME/conf
+export HADOOP_HOME=/opt/hadoop-3.1.2
 export HADOOP_CONF_DIR=$HADOOP_HOME/etc/hadoop
 ```
 
 ## 2.5 配置`livy.conf`
 修改如下配置
 ```bash
+vim $LIVY_HOME/conf/livy.conf
+# 添加如下配置，保存并退出
 livy.server.host = cdh6
 livy.server.port = 8998
-livy.spark.master = cdh6
-livy.spark.deploy-mode = client
-```
-
-## 2.6 配置环境变量
-```bash
-vim ~/.bash_profile
-# set Livy environment
-export LIVY_HOME=/opt/apache-livy-0.6.0-incubating-bin
-export PATH=$PATH:$LIVY_HOME/bin
-
+livy.spark.master = yarn
+livy.spark.deploy-mode = cluster
+livy.repl.enable-hive-context = true
 ```
 
 
 ## 2.7 启动Livy
-运行Live 服务之前，需要安装Spark，官网是强烈建议将Spark配置为以YARN群集模式提交应用程序。这可确保用户会话在YARN群集中正确考虑其资源，并且运行Livy服务器的主机在运行多个用户会话时不会过载。
+运行Live 服务之前，需要安装Spark，官网是强烈建议将Spark配置为以YARN群集模式提交应用程序。
+这可确保用户会话在YARN群集中正确考虑其资源，并且运行Livy服务器的主机在运行多个用户会话时不会过载。
                       
 ```bash
 $LIVY_HOME/bin/livy-server start
