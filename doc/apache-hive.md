@@ -261,4 +261,12 @@ hive> set mapreduce.reduce.memory.mb=1025;
 
 这里可以看到最近25条执行的SQL，也可以看到Hive的[日志](http://cdh6:10002/logs/hive.log)信息
 
+## 1.13 关闭
+这里主要关闭的： metastore 、hiveserver2
+```bash
+kill -9 `ps -ef | grep metastore |grep -v grep |awk '{print $2}'`
+kill -9 `ps -ef | grep hiveserver2 |grep -v grep  |awk '{print $2}'`
+```
+
+
 
