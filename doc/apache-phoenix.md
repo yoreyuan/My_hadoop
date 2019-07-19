@@ -6,6 +6,41 @@ Phoenix详细的信息可以查看： [官网](http://phoenix.apache.org/index.h
 [Performance](http://phoenix.apache.org/performance.html) &nbsp; &nbsp; |  &nbsp; &nbsp; 
 [支持的SQL语法](http://phoenix.apache.org/language/index.html)
 
+<br/>
+
+CDH6中集成的HBase版本为`2.1.0+cdh6.2.0` ,我们从官方的镜像资源下载列表中看到最新的CDH支持到`cdh5.14.2`的版本，这种版本的直接有一个`parcels`包，可以通过Cloudera Manager的parcel页面添加资源，来安装组件。
+
+通过查看源码`git branch -a`可以看到 remotes/origin/**5.x-cdh6** 分支，但在源码编译安装时这个分支还不完整，编译出来时会缺少一些包，因此我们直接尝试安装`v5.0.0-HBase-2.0`版本的Phoenix，安装方式有两种，第一种直接下载官方编译好的 [apache-phoenix-5.0.0-HBase-2.0](http://archive.apache.org/dist/phoenix/apache-phoenix-5.0.0-HBase-2.0/)包`apache-phoenix-5.0.0-HBase-2.0-bin.tar.gz`；第二种是通过编译源码的方式来安装。这里我们直接使用源码编译来进行安装。
+
+<br/>
+
+# 目录
+
+* 1 [Installation](#1 )
+    - 1.1 [源码编译](#1.1 )
+    - 1.2 [安装](#1.2)
+    - 1.3 [Cloudera Manager 的配置](#1.3)
+* 2 [Using](#2 )
+    + 2.1 [NoClassDefFoundError解决](#2.1 )
+    + 2.2 [原有HBase表的映射同步](#2.2 )
+    + 2.3 [查看表信息和插入数据](#2.3 )
+    + 2.4 [数据类型](#2.4 )
+    + 2.5 [修改表信息](#2.5)
+    + 2.6 [删除库](#2.6 )
+    + 2.7 [JDBC](#2.7 )
+        - 2.7.1 [新建一个Maven工程](#2.7.1 )
+        - 2.7.2 [pom.xml](#2.7.2)
+        - 2.7.3 [JDBC Client代码](#2.7.3 )
+* 3 [工具](#3 )
+    + 3.1 [DBeaver](#3.1)
+    + 3.2 [SQuirrel SQL](#3.2 )
+        - 3.2.1 [下载](#3.2.1)
+        - 3.2.2 [解压和配置](#3.2.2)
+        - 3.2.3 [启动](#3.2.3 )
+        - 3.2.4 [配置 Phoenix 驱动](#3.2.4)
+        - 3.2.5 [连接Phoenix](#3.2.5 )
+        - 3.2.6 [查询](#3.2.6 )
+* 4 [资料](#4 )
 
 *******************
 
@@ -216,6 +251,8 @@ cp phoenix-client/target/phoenix-5.0.0-HBase-2.0-client.jar $PHOENIX_HOME/
 sqlline.py cdh2:2181
 ```
 
+2.1 NoClassDefFoundError解决
+
 如果进入Phoenix终端时报如下错误：
 ```
 Error: org.apache.phoenix.exception.PhoenixIOException: org.apache.hadoop.hbase.DoNotRetryIOException: java.lang.NoClassDefFoundError: org/apache/htrace/Trace
@@ -278,8 +315,6 @@ sqlline version 1.2.0
 |            | SYSTEM       | STATS       | SYSTEM TABLE  |          |            |                            |                 |              | false           | null          | false         |                 |            |             | false          | false       |
 +------------+--------------+-------------+---------------+----------+------------+----------------------------+-----------------+--------------+-----------------+---------------+---------------+-----------------+------------+-------------+----------------+-------------+
 ```
-
-## 2.1 数据类型
 
 
 ## 2.2 原有HBase表的映射同步
