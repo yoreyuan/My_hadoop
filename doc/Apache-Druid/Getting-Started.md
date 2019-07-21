@@ -335,7 +335,7 @@ rm -rf /tmp/kafka-logs
 我们从2015年9月12日开始包含维基百科编辑样本，以帮助您入门。
 
 #### 1.1 Loading data with the data loader （使用数据加载器加载数据）
-导航到 [localhost:8888](http://localhost:8888)，然后单击控制台标题中的加载数据。 选择本地磁盘。
+导航到 [localhost:8888](http://localhost:8888)，然后单击控制台标题导航中的`Load data`。 选择`Local disk`。
 
 ![tutorial-batch-data-loader-01.png](https://druid.apache.org/docs/latest/tutorials/img/tutorial-batch-data-loader-01.png)
 
@@ -977,8 +977,5 @@ bin/start-cluster-query-server
 <br/>
 
 **********
-
-### 2 [Migrating from a Single-Server Deployment]()
-
 
 ## 2.3 [Further examples]() （更多案例）
