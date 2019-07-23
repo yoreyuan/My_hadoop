@@ -146,6 +146,7 @@ discovery.zen.ping.unicast.hosts: ["es-node1", "es-node2"]
 http.cors.enabled: true
 # *表示支持所有域名
 http.cors.allow-origin: "*"
+xpack.security.enabled: false
 
 ```
 

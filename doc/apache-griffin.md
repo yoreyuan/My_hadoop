@@ -87,8 +87,8 @@ Apache Griffin于2016年12月7日被接纳为Apache孵化器项目。Apache Grif
 * [npm](https://nodejs.org/en/download/)
 * [Scala](https://www.scala-lang.org/download/all.html)
 
-* [Hadoop (2.6.0或更高版本)](https://blog.csdn.net/github_39577257/article/details/89020980)
-* [Hive (版本2.x)](https://blog.csdn.net/github_39577257/article/details/89020980)
+* [Hadoop (2.6.0或更高版本)](https://github.com/yoreyuan/My_hadoop/blob/master/doc/apache-hadoop.md#1-deploy)
+* [Hive (版本2.x)](https://github.com/yoreyuan/My_hadoop/blob/master/doc/apache-hive.md#1-deploy)
 * [Spark (版本2.2.1)](https://github.com/yoreyuan/My_spark/blob/spark-demo-2.x/doc/Depoying.md#3-spark-standalone-mode)
 * [Livy](https://github.com/yoreyuan/My_hadoop/blob/master/doc/apache-livy.md)
 * [ElasticSearch(5.0或更高版本)](https://github.com/yoreyuan/My_hadoop/blob/master/doc/elasticsearch-install.md)

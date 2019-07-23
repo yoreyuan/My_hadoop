@@ -269,4 +269,25 @@ kill -9 `ps -ef | grep hiveserver2 |grep -v grep  |awk '{print $2}'`
 ```
 
 
+# 2 使用
+## 2.1 加载本地文件系统数据创建一个表
+将数据文件data/teacher.txt上传的hive的本地某个文件夹下，例如/home 下
+```sql
+-- 创建一个学生表(内表),并插入数据
+CREATE TABLE STUDENT(SNO VARCHAR(3),SNAME VARCHAR(4),SSEX VARCHAR(2),SBIRTHDAY DATE,CLASS VARCHAR(5))
+ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t';
+LOAD DATA LOCAL INPATH '/home/student.txt' OVERWRITE INTO TABLE STUDENT;
+
+```
+
+## 2.2 加载HDFS数据创建一个表
+已经将student.csv数据上传到HDFS的/home 下。
+```sql
+-- 创建一个学生表(内表),并插入数据
+CREATE TABLE STUDENT(SNO VARCHAR(3),SNAME VARCHAR(4),SSEX VARCHAR(2),SBIRTHDAY DATE,CLASS VARCHAR(5))
+ROW FORMAT DELIMITED FIELDS TERMINATED BY ',';
+LOAD DATA INPATH '/home/student.csv' OVERWRITE INTO TABLE STUDENT;
+
+```
+
 

@@ -296,7 +296,49 @@ YARN_NODEMANAGER_USER=root
 * 提交一个MR测试一下： `  hadoop jar $HADOOP_HOME/share/hadoop/mapreduce/hadoop-mapreduce-examples-3.1.2.jar wordcount  /tmp/input   /tmp/output `
 * 查看结果： `  hadoop fs -head /tmp/output/part-r-00000 `
 
-## 1.16 关闭Hadoop
+## 1.16 对集群进行基准测试
+执行如下命令测试
+```bash
+# 不指定参数时会列出测试项，选择对应测试项测试即可。
+$HADOOP_HOME/bin/hadoop jar  $HADOOP_HOME/share/hadoop/mapreduce/hadoop-mapreduce-client-jobclient-*-tests.jar TestDFSIO
+``` 
+指定的参数说明如下：
+
+参数 | 说明
+:---- | :----
+DFSCIOTest                  | libhdfs 分布式 I/O 基准测试
+DistributedFSCheck          | 文件系统一致性的分布式检查
+JHLogAnalyzer               | Job History Log analyzer
+MRReliabilityTest           | 通过注入faults/failures来测试MR框架可靠性的程序
+NNdataGenerator             | 生成 NNloadGenerator 要使用的数据
+NNloadGenerator             | 在 Namenode 上运行生成 NN loadgenerator的 WITHOUT MR 负载
+NNloadGeneratorMR           | 在NameNode使用 NN loadgenerator作为MR job运行生成负载
+NNstructureGenerator        | 生成NNdataGenerator使用的结构
+SliveTest                   | HDFS 压力测试和实施数据验证
+TestDFSIO                   | 分布式 I/O 基准测试
+fail                        | 总是失败的一个job
+filebench                   | Benchmark SequenceFile(Input or Output) Format(block,record compressed and uncompressed), Text(Input or Output) Format(compressed and uncompressed)
+gsleep                      | 一个睡眠job，其映射器为每条记录创建1MB缓冲区
+largesorter                 | 大型排序测试
+loadgen                     | 生成 map/reduce 负载生成器
+mapredtest                  | map/reduce 测试检查
+minicluster                 | 单进程 HDFS 和 MR 集群.
+mrbench                     | 可以创建许多小Job的 map/reduce 基准
+nnbench                     | 侧重于带有MR的NameN基准
+nnbenchWithoutMR            | 侧重不带有MR的基准
+sleep                       | 一个Job的每个Map和Reduce休眠
+testbigmapoutput            | 一个map/reduce程序，使用于非常大的不可拆分文件，并进行特征 map/reduce
+testfilesystem              | FileSystem 的 read/write 测试
+testmapredsort              | 一个map/reduce程序，用于验证map-reduce框架的排序。
+testsequencefile            | 对二进制键值对的flat 文件测试
+testsequencefileinputformat | 序列文件输入格式的测试
+testtextinputformat         | 文本输入格式的测试
+threadedmapbench            | 一个map/reduce基准测试，用于比较map与多次spills的性能，并通过1次溢出map
+timelineperformance         | 启动映射器以测试时间轴服务性能的job
+
+
+
+## 1.17 关闭Hadoop
 ```bash
 $HADOOP_HOME/sbin/stop-all.sh
 ```
