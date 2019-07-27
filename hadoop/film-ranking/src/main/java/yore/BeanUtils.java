@@ -39,7 +39,7 @@ public class BeanUtils {
     public static  <T> T copyToBean(String formatStr, String separator, Class<T> entity) throws IllegalAccessException, InstantiationException {
         T t = entity.newInstance();
 
-        String[] strArr = formatStr.split(",");
+        String[] strArr = formatStr.split(separator);
         Field[] fields = t.getClass().getDeclaredFields();
 //        System.out.println("strArr=" + strArr.length + "\tfields=" + fields.length);
         for (int i = 0, j=0; i < strArr.length; i++, j++) {
