@@ -9,11 +9,11 @@ import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Partitioner;
 import org.apache.hadoop.mapreduce.Reducer;
-import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
-import org.apache.hadoop.mapreduce.lib.input.MultipleInputs;
-import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
+import org.apache.hadoop.mapreduce.lib.input.*;
 import org.apache.hadoop.mapreduce.lib.jobcontrol.ControlledJob;
 import org.apache.hadoop.mapreduce.lib.jobcontrol.JobControl;
+import org.apache.hadoop.mapreduce.lib.join.CompositeInputFormat;
+import org.apache.hadoop.mapreduce.lib.join.TupleWritable;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.util.Tool;
@@ -25,13 +25,16 @@ import yore.etl.MovieEntity;
 import yore.etl.RankQuoteEntity;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * MapReduce驱动类，
  * 提交命名：
- *      集群：hadoop jar film-ranking-1.0-SNAPSHOT.jar hdfs://cdh6:8020/home/douban/doubanMovie.csv hdfs://cdh6:8020/home/douban/rankQuote.csv hdfs://cdh6:8020/home/douban/out
- *           hadoop jar film-ranking-1.0-SNAPSHOT.jar hdfs://cdh6:8020/home/douban/doubanMovie.csv hdfs://cdh6:8020/home/douban/rankQuote.csv file:///home/out
+ *      集群：hadoop jar film-ranking-1.0-SNAPSHOT.jar true hdfs://cdh6:8020/home/douban/t1/ hdfs://cdh6:8020/home/douban/t2/ hdfs://cdh6:8020/home/douban/out
+ *           hadoop jar film-ranking-1.0-SNAPSHOT.jar true hdfs://cdh6:8020/home/douban/t1/ hdfs://cdh6:8020/home/douban/t2/ file:///home/out
+ *           hadoop jar film-ranking-1.0-SNAPSHOT.jar false hdfs://cdh6:8020/home/douban/t1/ hdfs://cdh6:8020/home/douban/t2/ file:///home/out
  *
  * Created by yore on 2019/7/25 21:18
  */
@@ -39,15 +42,17 @@ public class MovieDriver extends Configured implements Tool {
     private static Logger LOG = LoggerFactory.getLogger(MovieDriver.class);
     private static StringBuilder params = new StringBuilder();
     static {
-        params.append("\t 三个参数：\n")
-                .append("\t\t 参数1 :\t csv文件1路径\n")
-                .append("\t\t 参数2 :\t csv文件2路径\n")
-                .append("\t\t 参数3 :\t 结果输出路径\n")
-                .append("\t 或四个参数：\n")
-                .append("\t\t 参数1 :\t csv文件1路径\n")
-                .append("\t\t 参数2 :\t csv文件2路径\n")
-                .append("\t\t 参数3 :\t 中间结果输出路径\n")
-                .append("\t\t 参数4 :\t 最终结果路径\n");
+        params.append("\t 四个个参数：\n")
+                .append("\t\t 参数1 :\t true：自定义的MRjoin；false：CompositeInputFormat方式join\n")
+                .append("\t\t 参数2 :\t csv文件1路径\n")
+                .append("\t\t 参数3 :\t csv文件2路径\n")
+                .append("\t\t 参数4 :\t 结果输出路径\n")
+                .append("\t 或五个参数：\n")
+                .append("\t\t 参数1 :\t true：自定义的MRjoin；false：CompositeInputFormat方式join\n")
+                .append("\t\t 参数2 :\t csv文件1路径\n")
+                .append("\t\t 参数3 :\t csv文件2路径\n")
+                .append("\t\t 参数4 :\t 中间结果输出路径\n")
+                .append("\t\t 参数5 :\t 最终结果路径\n");
     }
 
     public static void main(String[] args) throws Exception {
@@ -57,10 +62,10 @@ public class MovieDriver extends Configured implements Tool {
             System.err.println(params.toString());
             System.exit(1);
         }
-        if(args.length == 3){
-            System.out.println(params.toString().substring(0, params.indexOf("\t 或四个参数：\n")));
-        }else if(args.length == 4){
-            System.out.println(params.toString().substring(params.indexOf("\t 或四个参数：\n")));
+        if(args.length == 4){
+            System.out.println(params.toString().substring(0, params.indexOf("\t 或五个参数：\n")));
+        }else if(args.length == 5){
+            System.out.println(params.toString().substring(params.indexOf("\t 或五个参数：\n")));
         }else{
             System.err.println(params.toString());
             System.exit(1);
@@ -87,34 +92,67 @@ public class MovieDriver extends Configured implements Tool {
         LOG.info("MR STARTED .... ");
 
         Configuration conf =  this.getConf();
-         // reduce的key和value的分隔符，默认是制表符。 org.apache.hadoop.mapreduce.lib.output.TextOutputFormat
-//        conf.set("mapred.textoutputformat.separator", "");
-        conf.set("mapreduce.output.textoutputformat.separator", " ");
+        Job job = Job.getInstance(conf);
 
-        // --------------------- job 1  -----------------------------
-        Job job = Job.getInstance(conf, "movie join quote job");
-        job.setNumReduceTasks(1);
-        job.setPartitionerClass(MovieJoinPartitioner.class);
 
+        job.setJobName("movie_join_quote_job");
         job.setJarByClass(getClass());
-        job.setMapperClass(MovieJoinMapper.class);
-        job.setReducerClass(MovieJoinReducer.class);
-
-        job.setMapOutputKeyClass(Text.class);       //Mapper的key输出类型
-        job.setMapOutputValueClass(Text.class);     //Mapper的value输出类型
-        job.setOutputKeyClass(Text.class);          //key输出类型
-        job.setOutputValueClass(Text.class);        //value的输出类型
+        job.setNumReduceTasks(1);
 
 //        Path out = new Path(args[2]);
-        Path out = args.length==3? new Path(args[2] + "-tmp"):new Path(args[2]);
+        Path out = args.length==4? new Path(args[3] + "-tmp"):new Path(args[3]);
         // 删除存在的文件，方便任务重跑
         out.getFileSystem(conf).delete(out,true);
-        // 多文件作为输入
-        MultipleInputs.addInputPath(job, new Path(args[0]), TextInputFormat.class, MovieJoinMapper.class);
-        MultipleInputs.addInputPath(job, new Path(args[1]), TextInputFormat.class, MovieJoinMapper.class);
+
+        // --------------------- job 1  -----------------------------
+        boolean isMyself = Boolean.parseBoolean(args[0]);
+        if(isMyself){
+            // reduce的key和value的分隔符，默认是制表符。 org.apache.hadoop.mapreduce.lib.output.TextOutputFormat
+            //conf.set("mapred.textoutputformat.separator", "");
+            job.getConfiguration().set("mapreduce.output.textoutputformat.separator", " ");
+            job.setPartitionerClass(MovieJoinPartitioner.class);
+            job.setMapperClass(MovieJoinMapper.class);
+            //job.setCombinerClass(MovieJoinReducer.class);
+            job.setReducerClass(MovieJoinReducer.class);
+
+            job.setMapOutputKeyClass(Text.class);       //Mapper的key输出类型
+            job.setMapOutputValueClass(Text.class);     //Mapper的value输出类型
+            job.setOutputKeyClass(Text.class);          //key输出类型
+            job.setOutputValueClass(Text.class);        //value的输出类型
+
+            // 多文件作为输入
+            MultipleInputs.addInputPath(job, new Path(args[1]), TextInputFormat.class, MovieJoinMapper.class);
+            MultipleInputs.addInputPath(job, new Path(args[2]), TextInputFormat.class, MovieJoinMapper.class);
+
+        }else{
+            // https://github.com/apache/hadoop/blob/trunk/hadoop-mapreduce-project/hadoop-mapreduce-examples/src/main/java/org/apache/hadoop/examples/Join.java
+            //job.setNumReduceTasks(0);  //没有Reduce，直接Map作为输出
+            List<Path> plist = new ArrayList<Path>(){{
+                add(new Path(args[1]));
+                add(new Path(args[2]));
+            }};
+            job.getConfiguration().set("mapreduce.output.textoutputformat.separator", ",");
+            job.getConfiguration().set(KeyValueLineRecordReader.KEY_VALUE_SEPARATOR, ","); // 逗号分隔
+            job.getConfiguration().set(
+                    CompositeInputFormat.JOIN_EXPR,
+                    CompositeInputFormat.compose("outer", KeyValueTextInputFormat.class, plist.toArray(new Path[0]))
+            );
+            System.out.println(plist);
+
+            job.setMapperClass(MySimpleMR.MapClass.class);
+            job.setReducerClass(MySimpleMR.ReduceClass.class);
+            job.setInputFormatClass(CompositeInputFormat.class);
+            job.setOutputFormatClass(TextOutputFormat.class);
+
+            job.setMapOutputKeyClass(Text.class);
+            job.setMapOutputValueClass(TupleWritable.class);
+            job.setOutputKeyClass(Text.class);
+            job.setOutputValueClass(Text.class);
+
+        }
+
         // 输出格式化
         FileOutputFormat.setOutputPath(job, out);
-
 
 
         // --------------------- job 2  -----------------------------
@@ -132,7 +170,7 @@ public class MovieDriver extends Configured implements Tool {
         job2.setOutputKeyClass(MovieWritable.class);
         job2.setOutputValueClass(NullWritable.class);
 
-        Path out2 = args.length==3? new Path(args[2]):new Path(args[3]);
+        Path out2 = args.length==4? new Path(args[3]):new Path(args[4]);
 
         out2.getFileSystem(conf).delete(out2,true);
         FileInputFormat.addInputPath(job2, out);
@@ -170,14 +208,53 @@ public class MovieDriver extends Configured implements Tool {
             Thread.sleep(500);
         }
         jc.stop();
-        if(args.length==3) out.getFileSystem(conf).delete(out,true);
+        if(args.length==4) out.getFileSystem(conf).delete(out,true);
         return 0;
 
     }
 
     // ------------------------ join -----------------------
+    public static class MySimpleMR{
+        public static class MapClass extends Mapper<Text, TupleWritable, Text, TupleWritable> {
+            @Override
+            public void map(Text key, TupleWritable value, Context output) throws IOException, InterruptedException {
+                output.write(key, value);
+            }
+        }
+        public static class ReduceClass extends  Reducer<Text, TupleWritable, Text, Text> {
+            @Override
+            public void reduce(Text key, Iterable<TupleWritable> values, Context context) throws IOException, InterruptedException {
+                String p = "",n = "" ;
+
+                for (TupleWritable val : values) {
+                    if(val.get(1).toString().split(",").length==2){
+                        n = val.get(1).toString();
+                    }else{
+                        try {
+                            /*String[] movieArr = val.get(0).toString().split(",");
+                            p = movieArr[0] + "," +
+                                    movieArr[11].trim() + "," +
+                                    movieArr[12].trim();*/
+
+                            MovieEntity movieEntity = BeanUtils.copyToBean(key + "," + val.get(0).toString(), MovieEntity.class);
+                            p = movieEntity.getMovie_name() + "," +
+                                    movieEntity.getRating_num() + "," +
+                                    movieEntity.getRating_people();
+
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+                context.write(key, new Text(p + "," + n));
+            }
+        }
+    }
+
     /**
      * Mapper类，多文件输入，根据主键，将组件相同的分到同一个分区
+     *
+     * LongWritable: 行标识  "so knowing the line number within a split would be possible, but not within the file."
      *
      * @auther: yore
      */
@@ -225,9 +302,9 @@ public class MovieDriver extends Configured implements Tool {
      */
     static class MovieJoinPartitioner extends Partitioner<Text, Text>{
         @Override
-        public int getPartition(Text key, Text value, int numPartitions) {
+        public int getPartition(Text key, Text value, int numReduceTasks) {
             // 根据主键哈希值分区，并且值不能超过Integer的最大值。
-            return (key.hashCode() & Integer.MAX_VALUE) % numPartitions;
+            return (key.hashCode() & Integer.MAX_VALUE) % numReduceTasks;
         }
     }
 
