@@ -307,7 +307,7 @@ npm -v
 ```
 
 ## <a id='2.2'></a>2.2 如果没有安装 Git 先安装 Git
-```bash
+```
 yum install –y git
 git --version
 ```
@@ -329,7 +329,7 @@ npm install grunt --save
 
 ## <a id='2.5'></a>2.5 配置 Gruntfile.js 
 大概在92行左右，修改：
-```json
+```
 		connect: {
 			server: {
 				options: {
@@ -344,11 +344,11 @@ npm install grunt --save
 
 ## <a id='2.6'></a>2.6  配置 _site/app.js
 大概在4361行左右，修改
-```js
+```
 		init: function(parent) {
 			this._super();
 			this.prefs = services.Preferences.instance();
-			this.base_uri = this.config.base_uri || this.prefs.get("app-base_uri") || "http://es-node1:9200" || "http://es-node2:9201";
+			this.base_uri = this.config.base_uri || this.prefs.get("app-base_uri") || "http://es-node1:9200" || "http://es-node2:9200";
 			if( this.base_uri.charAt( this.base_uri.length - 1 ) !== "/" ) {
 				// XHR request fails if the URL is not ending with a "/"
 				this.base_uri += "/";
@@ -775,4 +775,80 @@ xpack.security.transport.ssl.truststore.path: certs/wolfbolin-elastic-certificat
 
 * Elasticsearch使用可以查看我的另一份资料 [elasticsearch.md](./elasticsearch.md)
 * 我的blog [Elasticsearch 6.x安及其Kibana和head插件安装](https://blog.csdn.net/github_39577257/article/details/98426553)
+
+
+<br/><br/>
+
+# 5  Docker ES 安装
+如果是其他版本，可以访问 [Docker @ Elastic](https://www.docker.elastic.co/)，点击`>_`自己的版本。
+
+## 5.1 获取ES和head镜像
+```bash
+# 拉取es镜像，如果比较慢可以使用案例云专用镜像网址 docker pull registry.cn-hangzhou.aliyuncs.com/elasticsearch/elasticsearch:6.8.2
+docker pull docker.elastic.co/elasticsearch/elasticsearch:6.8.2
+# 拉取head进项
+docker pull mobz/elasticsearch-head:5
+# 可以重命名这个镜像的仓库名
+docker tag <IMAGE ID> registry.cn-hangzhou.aliyuncs.com/elasticsearch/elasticsearch aliyuncs/elasticsearch:6.8.2
+
+```
+
+## 5.2 启动镜像
+```bash
+docker run -d --name es -p 9200:9200 -p 9300:9300 -e "discovery.type=single-node" aliyuncs/elasticsearch:6.8.2
+#这里将容器中的9100端口暴露为9101
+docker run -d --name es_admin -p 9101:9100 mobz/elasticsearch-head:5
+
+```
+
+## 5.3 查看启动的镜像
+````bash
+[root@cdh6 ~]# docker ps
+CONTAINER ID        IMAGE                                                                 COMMAND                  CREATED             STATUS                       PORTS                                            NAMES
+a1a55ac7aea0        mobz/elasticsearch-head:5                                             "/bin/sh -c 'grunt s…"   5 seconds ago       Up 4 seconds                 0.0.0.0:9101->9100/tcp                           es_admin
+504f8500399c        registry.cn-hangzhou.aliyuncs.com/elasticsearch/elasticsearch:6.8.2   "/usr/local/bin/dock…"   2 minutes ago       Up 2 minutes                 0.0.0.0:9200->9200/tcp, 0.0.0.0:9300->9300/tcp   es
+
+````
+
+## 5.4 访问UI
+* 访问: http://$docker-hostname:9200/
+* 访问：http://cdh6:9101/
+
+
+## 5.4 配置
+如果要更改es配置，可以执行
+```bash
+docker exec -it es_admin bash
+# 将需要修改的文件拷贝出来，这里将容器中的的Gruntfile.js拷贝到当前文件
+docker cp es_admin:/usr/src/app/Gruntfile.js .
+# 进行修改
+# 替换容器的文件
+docker cp Gruntfile.js es_admin:/usr/src/app/
+
+```
+
+设置es为可跨域
+```bash
+docker cp es:/usr/share/elasticsearch/config/elasticsearch.yml .
+
+```
+本地修改elasticsearch.yml 文件
+```
+#添加如下修改
+http.cors.enabled: true
+http.cors.allow-origin: "*"
+
+```
+覆盖docker中的es配置文件，最后重启容器即可`docker restart <CONTAINER ID> `
+```bash
+docker cp elasticsearch.yml es:/usr/share/elasticsearch/config/
+
+```
+
+## 5.5 关闭
+```bash
+docker stop 容器ID
+
+```
+
 
