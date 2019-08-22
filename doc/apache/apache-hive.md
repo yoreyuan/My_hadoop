@@ -291,3 +291,34 @@ LOAD DATA INPATH '/home/student.csv' OVERWRITE INTO TABLE STUDENT;
 ```
 
 
+```bash
+#查找CDH中的包 hive-contrib-*.jar。例如CDH 6.3.0的这个包在 /opt/cloudera/parcels/CDH-6.2.0-1.cdh6.2.0.p0.967373/lib/hive/contrib/hive-contrib-2.1.1-cdh6.2.0.jar
+find / -name hive-contrib-*.jar
+
+#可以上传到HDFS上（路径使用 hdfs://${namenode}:8020/），也可以本地(file:///) 
+```
+
+# hive-site.xml配置
+```xml
+<property>
+  <name>hive.aux.jars.path</name>
+  <value>file:///opt/cloudera/parcels/CDH-6.2.0-1.cdh6.2.0.p0.967373/lib/hive/contrib/hive-contrib-2.1.1-cdh6.2.0.jar</value>
+  <description>Added by tiger.zeng on 20120202.These JAR file are available to all users for all jobs</description>
+</property>
+```
+
+```sql
+-- 如果没有上一步设置，需要手动临时导入 
+-- add jar file:///opt/cloudera/parcels/CDH-6.2.0-1.cdh6.2.0.p0.967373/lib/hive/contrib/hive-contrib-2.1.1-cdh6.2.0.jar;
+-- 例如使用 |#| 作为字段分割符，建表语句如下
+CREATE  TABLE  split_test(
+id   INT COMMENT '借阅查询ID',
+number   STRING COMMENT '流水号',
+`date`   STRING COMMENT '查询返回日期',
+loanamount   DOUBLE COMMENT '借款金额范围',
+createtime   TIMESTAMP COMMENT '创建时间'
+)ROW FORMAT SERDE 'org.apache.hadoop.hive.contrib.serde2.MultiDelimitSerDe'
+WITH SERDEPROPERTIES ("field.delim"="|#|")
+STORED AS TEXTFILE;
+
+```

@@ -524,7 +524,7 @@ Took 0.2915 seconds
 ```
 
 ### 2.7.3 JDBC Client代码
-[PhoenixJdbcClient](../hbase/phoenix-jdbc)
+[PhoenixJdbcClient](../../hbase/phoenix-jdbc)
 
 
 

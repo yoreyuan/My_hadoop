@@ -666,7 +666,7 @@ tail -f $GRIFFIN_HOME/service.out
 ## 3.5 访问 Service Platform WEB 页面
 几秒钟之后，我们可以访问Apache Griffin的 UI [http://cdh6:8090](http://cdh6:8090)，其端口号为`application.properties`中的server.port值。
 
-![Service Platform WEB UI](image/griffin-web-ui.png)
+![Service Platform WEB UI](../image/griffin-web-ui.png)
 输入用户名和密码
 * username: user
 * password: test
@@ -889,12 +889,12 @@ drwxr-xr-x   - root supergroup          0 2019-07-07 11:23 /griffin/data/batch/d
 
 ## 5.1 数据资产
 您可以通过单击右上角的“DataAssets”来检查数据资产。
-![DataAssets](image/griffin-web-ui-01.png)
+![DataAssets](../image/griffin-web-ui-01.png)
 
 ## 5.2 创建 measure
 单击头部的“Measures”，然后选择“Create Measure”。可以使用该measure来处理数据并获得所需的结果。
 
-![Measures](image/griffin-web-ui-02.png)
+![Measures](../image/griffin-web-ui-02.png)
 
 * 如果要测量源和目标之间的匹配率，请选择**Accuracy**。
 * 如果要检查数据的特定值（例如：空列计数），请选择**Data Profiling**。
@@ -905,12 +905,12 @@ drwxr-xr-x   - root supergroup          0 2019-07-07 11:23 /griffin/data/batch/d
 #### 1 Choose source （选择来源）
 选择我们将用于比较的数据源与字段。选择`demo-src`
 
-![Choose source](image/griffin-web-ui-03.png)
+![Choose source](../image/griffin-web-ui-03.png)
 
 #### 2 Choose target （选择目标）
 选择我们将用于比较的数据源与字段。选择`demo-tgt`
 
-![Choose target](image/griffin-web-ui-04.png)
+![Choose target](../image/griffin-web-ui-04.png)
 
 #### 3 Mapping source and target （映射source和target）
 1. "Map To": 选择source和target匹配的规则。共以下6中选项:
@@ -922,25 +922,25 @@ drwxr-xr-x   - root supergroup          0 2019-07-07 11:23 /griffin/data/batch/d
     * `<= `: 目标列数据应小于或等于源列数据。
 
 2. "Source fields": 选择要与目标列进行比较的源列。
-![Mapping source and target](image/griffin-web-ui-05.png)
+![Mapping source and target](../image/griffin-web-ui-05.png)
 
 #### 4 Partition Configuration （分区设置）
 为源数据集和目标数据集设置分区配置。分区大小表示hive数据库最小数据单元，用于分割要计算的数据。条件填写`dt=#YYYYMMdd# AND hour=#HH#`
 
 `Done file` 表示done file分区路径的格式。
 
-![Partition Configuration](image/griffin-web-ui-06.png)
+![Partition Configuration](../image/griffin-web-ui-06.png)
 
 #### 5 Configuration （配置）
 设置所需的度量信息。organization为度量的组，稍后可以安组来管理度量仪表面板。
 
-![Configuration](image/griffin-web-ui-07.png)
+![Configuration](../image/griffin-web-ui-07.png)
 
 
 #### 6 Measure information （度量信息）
 创建新的精确度量后，我们可以看到列出的度量信息的汇总页面。
 
-![Measure information](image/griffin-web-ui-08.png)
+![Measure information](../image/griffin-web-ui-08.png)
 
 可以看到下面有一个准确率的计算公式，假如源表A有1000条数据，目标表B只有999条记录，且能够与所选的字段信息匹配，那么准确率= 999/1000 * 100％= 99.9％。
 
@@ -948,9 +948,9 @@ drwxr-xr-x   - root supergroup          0 2019-07-07 11:23 /griffin/data/batch/d
 通过点击 "Jobs"，然后选择 "Create Job"。我们可以定期提交作业以执行测量。
 
 填入定时的cron 表达式。现在仅支持简单的定期调度工作进行测量。
-![Create Job](image/griffin-web-ui-09.png)
+![Create Job](../image/griffin-web-ui-09.png)
 
-![Create Job Info](image/griffin-web-ui-10.png)
+![Create Job Info](../image/griffin-web-ui-10.png)
 
 说明：
 * **Job Name**: 设置Job的名字
