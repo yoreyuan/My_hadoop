@@ -1,0 +1,92 @@
+{
+  "job": {
+    "content": [
+      {
+        "reader": {
+          "name": "mysqlreader",
+          "parameter": {
+            "column": ["*"],
+            "connection": [
+              {
+                "jdbcUrl": ["jdbc:mysql://xx.xxx.x.xx:3306/als"],
+                "table": ["acct_ahead"]
+              }
+            ],
+            "password": "bz#XL88Khgf",
+            "username": "canal",
+            "where": "idaction >= $pk"
+          }
+        },
+        "writer": {
+          "name": "odpswriter",
+          "parameter": {
+            "accessId": "DaVVGeKTAUdLosWZ",
+            "accessKey": "yIbv6kZCHxSkRA6Gwnu5lkuZkjeWaE",
+            "column": ["*"],
+            "odpsServer": "http://xx.x.xxx.xxx/api",
+            "partition": "tx_date=20180928",
+            "project": "sdata_chq",
+            "table": "s010_acct_ahead",
+            "truncate": false,
+            "tunnelServer": "http://xx.x.xxx.xxx"
+          }
+        }
+      }
+    ],
+    "setting": {
+      "speed": {
+        "channel": "1"
+      }
+    }
+  }
+}
+
+
+//{
+//  "job": {
+//    "setting": {
+//      "speed": {
+//        "channel": 3
+//      }
+//    },
+//    "content": [
+//      {
+//        "reader": {
+//          "name": "hdfsreader",
+//          "parameter": {
+//            "path": "/user/hive/warehouse/mytable01/*",
+//            "defaultFS": "hdfs://xxx:port",
+//            "column": [
+//              {
+//                "index": 0,
+//                "type": "long"
+//              },
+//              {
+//                "index": 1,
+//                "type": "boolean"
+//              },
+//              {
+//                "type": "string",
+//                "value": "hello"
+//              },
+//              {
+//                "index": 2,
+//                "type": "double"
+//              }
+//            ],
+//            "fileType": "orc",
+//            "encoding": "UTF-8",
+//            "fieldDelimiter": ","
+//          }
+//
+//        },
+//        "writer": {
+//          "name": "streamwriter",
+//          "parameter": {
+//            "print": true
+//          }
+//        }
+//      }
+//    ]
+//  }
+//}
