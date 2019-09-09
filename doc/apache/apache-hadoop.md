@@ -62,6 +62,18 @@ vim $HADOOP_HOME/etc/hadoop/hadoop-env.sh
 export JAVA_HOME=/usr/local/zulu8
 export HADOOP_HOME=/opt/hadoop-3.1.2
 export HADOOP_CONF_DIR=${HADOOP_HOME}/etc/hadoop
+# 如果不配置会报如下错误
+# ERROR: but there is no HDFS_NAMENODE_USER defined. Aborting operation.
+# ERROR: but there is no HDFS_DATANODE_USER defined. Aborting operation.
+# ERROR: but there is no HDFS_SECONDARYNAMENODE_USER defined. Aborting operation.
+# ERROR: but there is no YARN_RESOURCEMANAGER_USER defined. Aborting operation.
+# ERROR: but there is no YARN_NODEMANAGER_USER defined. Aborting operation.
+export HDFS_NAMENODE_USER=root
+export HDFS_DATANODE_USER=root
+export HDFS_SECONDARYNAMENODE_USER=root
+export YARN_RESOURCEMANAGER_USER=root
+export YARN_NODEMANAGER_USER=root
+
 ```
 
 ## 1.7 配置 [core-site.xml](http://hadoop.apache.org/docs/stable/hadoop-project-dist/hadoop-common/core-default.xml)
@@ -254,37 +266,6 @@ $HADOOP_HOME/sbin/start-dfs.sh
 $HADOOP_HOME/sbin/start-yarn.sh
 ```
 
-### 1.14.1 问题解决
-启动时如果出现这个问题，此文件中添加对应配置
-```
-[root@cdh6 ~]# $HADOOP_HOME/sbin/start-dfs.sh
-Starting namenodes on [cdh6]
-ERROR: Attempting to operate on hdfs namenode as root
-ERROR: but there is no HDFS_NAMENODE_USER defined. Aborting operation.
-Starting datanodes
-ERROR: Attempting to operate on hdfs datanode as root
-ERROR: but there is no HDFS_DATANODE_USER defined. Aborting operation.
-Starting secondary namenodes [cdh6]
-ERROR: Attempting to operate on hdfs secondarynamenode as root
-ERROR: but there is no HDFS_SECONDARYNAMENODE_USER defined. Aborting operation.
-```
-
-`start-dfs.sh`文件头部添加
-```bash
-#!/usr/bin/env bash
-HDFS_DATANODE_USER=root
-HADOOP_SECURE_DN_USER=hdfs
-HDFS_NAMENODE_USER=root
-HDFS_SECONDARYNAMENODE_USER=root
-```
-
-`start-yarn.sh`文件头部添加
-```bash
-#!/usr/bin/env bash
-YARN_RESOURCEMANAGER_USER=root
-HADOOP_SECURE_DN_USER=yarn
-YARN_NODEMANAGER_USER=root
-```
 
 ## 1.15 验证和查看是否启动成功
 * jps:  Master节点的进程有：`NameNode`、`SecondaryNameNode`、`ResourceManager`，在worker节点的进程有：`DataNode`、`NodeManager`
@@ -343,4 +324,10 @@ timelineperformance         | 启动映射器以测试时间轴服务性能的jo
 $HADOOP_HOME/sbin/stop-all.sh
 ```
 
+
+```
+# 查看某一类文件的统计信息
+hadoop fs -count /app/flink/completed-jobs/*b | awk '{count++;sum+=$3}{print "文件信息:{\"count\": " count ",\"size\": " sum "}"}' | tail -n 1
+
+```
 
