@@ -36,7 +36,7 @@ export PATH=$PATH:$HIVE_HOME/bin
 ## 1.5 创建Hive的元数据库
 以MySQL为例，在MySQL服务器上执行，如下命令创建一个库，用来放置Hive的元数据信息
 ```bash
-mysql -u <username> -e "create database hive_metastore" -p
+mysql -u <username> -e "create database metastore" -p
 ```
 
 添加Mysql驱动包到Hive的lib
@@ -270,6 +270,60 @@ kill -9 `ps -ef | grep hiveserver2 |grep -v grep  |awk '{print $2}'`
 
 
 # 2 使用
+## 2.1 HiveSQ中注释中文乱码问题的解决
+```sql
+create table test (  
+id bigint comment '主键ID',  
+name string comment '名称',
+load_time timestamp,
+num double comment '数字'  
+)ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t'
+STORED AS TEXTFILE;
+
+--查看表，发现有中文乱码问题
+hive> desc test;
+OK
+id                      bigint                  ??ID
+name                    string                  ??
+num                     double                  ??
+Time taken: 0.173 seconds, Fetched: 3 row(s)
+
+```
+
+问题解决：
+```sql
+-- 登陆MySQL元数据库
+mysql> use metastore;
+
+--查看COLUMNS_V2表，发现COMMENT列就是中文乱码的
+mysql> select * from COLUMNS_V2;
++-------+---------+-------------+-----------+-------------+
+| CD_ID | COMMENT | COLUMN_NAME | TYPE_NAME | INTEGER_IDX |
++-------+---------+-------------+-----------+-------------+
+|   287 | ??ID    | id          | bigint    |           0 |
+|   287 | ??      | name        | string    |           1 |
+|   287 | ??      | num         | double    |           2 |
++-------+---------+-------------+-----------+-------------+
+3 rows in set (0.00 sec)
+
+--查看COLUMNS_V2建表语句，可以发现  ENGINE=InnoDB DEFAULT CHARSET=latin1 ，使用的是 latin1 字符，
+mysql> show create table COLUMNS_V2;
+--因此我们将该表的字符改为utf8
+alter table COLUMNS_V2 modify column COMMENT varchar(256) character set utf8; 
+-- 同时也把如下的表也改为utf8
+alter table TABLE_PARAMS modify column PARAM_VALUE varchar(4000) character set utf8; 
+alter table PARTITION_KEYS modify column PKEY_COMMENT varchar(4000) character set utf8; 
+
+```
+
+测试
+```sql
+--Hive中插入一条数据
+insert into table test values(1101, "hive组件", "2019-09-06 17:03:22",2.1);
+
+```
+
+
 ## 2.1 加载本地文件系统数据创建一个表
 将数据文件data/teacher.txt上传的hive的本地某个文件夹下，例如/home 下
 ```sql

@@ -72,3 +72,31 @@ CarbonData文件格式是HDFS中的一个列式存储，它具有许多现代列
 * Carbon as Spark's Datasource （Carbon作为Spark的数据源）
 * FAQs （常见问题解答）
 
+***********************
+
+# [什么是CarbonData](https://github.com/apache/carbondata/blob/master/docs/introduction.md)
+CarbonData是一个完全索引的柱状和Hadoop本机数据存储，用于处理繁重的分析工作负载和使用Spark SQL对大数据进行详细查询。CarbonData允许通过PetaBytes数据进行更快的交互式查询。
+
+CarbonData具有专门设计的优化功能，如多级索引，压缩和编码技术，旨在提高分析查询的性能，其中包括过滤器，聚合和不同的计数，
+用户希望在只有几个商业硬件集群的节点上的TB级别的数据提供一个亚秒级的查询响应。
+
+
+# [快速开始](https://github.com/apache/carbondata/blob/master/docs/quick-start-guide.md)
+
+访问[/release/carbondata](https://dist.apache.org/repos/dist/release/carbondata/)，选择版本下载，
+可以下下载源码[构建CarbonData](https://github.com/apache/carbondata/tree/master/build)，
+也可以下载编译好的版本的jar包的[carbondata](https://dist.apache.org/repos/dist/release/carbondata/)。
+
+## 下载
+例如这里下载
+[apache-carbondata-1.6.0-bin-spark2.3.2-hadoop2.7.2.jar](https://dist.apache.org/repos/dist/release/carbondata/1.6.0/apache-carbondata-1.6.0-bin-spark2.3.2-hadoop2.7.2.jar)
+
+## 先决条件
+[Spark 2.3.2](http://archive.apache.org/dist/spark/spark-2.3.2/)
+
+
+
+
+
+
+
