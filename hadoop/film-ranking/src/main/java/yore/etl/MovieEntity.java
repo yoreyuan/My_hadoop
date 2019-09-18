@@ -6,6 +6,7 @@ package yore.etl;
  * Created by yore on 2019/7/24 20:51
  */
 public class MovieEntity implements java.io.Serializable{
+    private static final long serialVersionUID = 5502618960465924176L;
 
     /** 电影标识 */
     private String id ;

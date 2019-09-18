@@ -156,7 +156,7 @@ public class MovieDriver extends Configured implements Tool {
 
 
         // --------------------- job 2  -----------------------------
-          Job job2 = Job.getInstance(conf, "movie sort job");
+        Job job2 = Job.getInstance(conf, "movie sort job");
         job2.setNumReduceTasks(1);
         job2.setPartitionerClass(RankPartitioner.class);
         job2.setGroupingComparatorClass(SecondSortGroupComparator.class);

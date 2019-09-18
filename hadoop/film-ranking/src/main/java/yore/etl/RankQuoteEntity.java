@@ -4,6 +4,7 @@ package yore.etl;
  * Created by yore on 2019/7/24 23:46
  */
 public class RankQuoteEntity implements java.io.Serializable{
+    private static final long serialVersionUID = -1140841635333911640L;
     private final static String separator = ",";
 
     /** 电影标识 */

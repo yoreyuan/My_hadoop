@@ -44,7 +44,7 @@ public class CrawlRankQuote {
                 for(Element element : Jsoup.parse(html).body().getElementById("content").select(".grid-16-8.clearfix .grid_view > li")){
                     RankQuoteEntity rankQuoteEntity = new RankQuoteEntity();
 
-                    // select 语法可以参考
+                    // select 语法可以参考 https://jsoup.org/cookbook/extracting-data/selector-syntax
                     String rank = element.select(".pic>em").text();
                     String href = element.select(".pic>a").attr("href");
                     String quote = element.select(".bd > .quote").text();
