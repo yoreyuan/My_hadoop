@@ -19,7 +19,7 @@ import java.io.OutputStreamWriter;
  *
  * Created by yore on 2019/7/24 23:46
  */
-public class CrawRankQuote {
+public class CrawlRankQuote {
 
     private static final String URL = "https://movie.douban.com/top250";
     public static final String OUT_PATH = "/Users/yoreyuan/Downloads/rankQuote.csv";
@@ -56,6 +56,12 @@ public class CrawRankQuote {
                     System.out.println(rankQuoteEntity);
                     out.write(rankQuoteEntity.toString() + "\n");
                     out.flush();
+
+                    try {
+                        Thread.sleep(5000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
 
                 }
             }
