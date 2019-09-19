@@ -60,6 +60,68 @@ Person person;
 person.ParseFormIstream(&input);cout <<  "Name: "  << person.name()  << endl;cout <<  "E-mail: "  << person.email()  << endl;
 ```
 
+# 安装
+
+## 编译方式安装
+```bash
+# 下载。访问https://github.com/protocolbuffers/protobuf/releases，下载对应版本
+
+# 编译
+cd protobuf
+# 获取GoogleMock，并生成对应的configure脚本
+./autogen.sh
+# 进行环境检测，并生成对应的makefile或Makefile  --prefix=/usr/local可以指定安装路径
+./configure
+# 按照makefile编译工程
+make
+
+# 安装。执行makefile里面的install部分，进行安装       --prefix=/usr/local可以指定安装路径
+make install
+
+# 查看版本信息
+protoc --version
+
+```
+
+## Mac 系统下安装
+```bash
+# 下载
+wget https://github.com/protocolbuffers/protobuf/releases/download/v3.9.1/protoc-3.9.1-osx-x86_64.zip
+
+# 创建一个文件夹
+mkdir protoc-3.9.1
+# 解压到protoc-3.9.1内
+unzip protoc-3.9.1-osx-x86_64.zip -d protoc-3.9.1
+
+# 配置环境变量
+export PROTOC_HOME=/Users/yoreyuan/soft/protoc-3.9.1
+export PATH=$PATH:$PROTOC_HOME/bin
+
+
+# 查看版本信息
+protoc --version
+
+```
+
+# 使用
+
+[protoc-demo](../protobuf/protoc-demo/src/main/proto/hello.proto)
+
+
+```bash
+# 通过命令编译
+protoc -I=源地址 --java_out=目标地址  源地址/xxx.proto
+
+# maven
+mvn protobuf:compile
+# 或者 Plugins -> protobuf -> protobuf:compile
+
+```
+
+![protobuf-comple.jpg](../doc/image/protobuf-comple.png)
+
+
+
 
 
 
