@@ -80,3 +80,38 @@ DataWorks则囊括数据开发、数据质量、数据安全、数据管理等�
 整体的数据流向如下图所示。其中，ODS层到DIM层的ETL（萃取（Extract）、转置（Transform）及加载（Load））处理是在MaxCompute中进行的，处理完成后会同步到所有存储系统。
 ODS层和DWD层会放在数据中间件中，供下游订阅使用。而DWS层和ADS层的数据通常会落地到在线存储系统中，下游通过接口调用的形式使用。
 ![整体的数据流向](http://static-aliyun-doc.oss-cn-hangzhou.aliyuncs.com/assets/img/158826/156101403946107_zh-CN.png)
+
+
+-------------
+
+# Java UDF
+MaxCompute > 开发 > SQL及函数 > [UDF](https://help.aliyun.com/document_detail/27866.html?spm=a2c4g.11186623.3.4.2c0234d8K9RUx5) > [Java UDF](https://help.aliyun.com/document_detail/27867.html?spm=a2c4g.11186623.2.12.3b3c3a68cEfMpK)
+
+pom.xml中引入如下依赖
+```xml
+<dependency>
+    <groupId>com.aliyun.odps</groupId>
+    <artifactId>odps-sdk-udf</artifactId>
+   <version>0.29.10-public</version>
+</dependency>
+```
+
+```sql
+-- 添加资源
+add file <local_file> [as alias] [comment 'cmt'][-f];
+-- 查看资源列表
+LIST RESOURCES;
+--
+DROP RESOURCE <resource_name>; --resource_name：创建资源时指定的资源名（不是路径）。
+
+-- 看当前项目空间中的所有自定义函数。
+LIST FUNCTIONS;
+-- 创建函数
+CREATE FUNCTION <function_name> AS <package_to_class> USING <resource_list>;
+-- 注销函数
+DROP FUNCTION <function_name>;
+
+
+```
+
+
