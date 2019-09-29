@@ -97,6 +97,7 @@ pom.xml中引入如下依赖
 ```
 
 ```sql
+--https://help.aliyun.com/document_detail/27831.html?spm=a2c4g.11186623.2.14.64f24502ZFqQBD#concept-pps-h1f-vdb
 -- 添加资源
 add file <local_file> [as alias] [comment 'cmt'][-f];
 -- 查看资源列表
@@ -108,6 +109,7 @@ DROP RESOURCE <resource_name>; --resource_name：创建资源时指定的资源�
 LIST FUNCTIONS;
 -- 创建函数
 CREATE FUNCTION <function_name> AS <package_to_class> USING <resource_list>;
+CREATE FUNCTION test_lower AS 'org.alidata.odps.udf.examples.Lower' USING 'my_lower.jar';
 -- 注销函数
 DROP FUNCTION <function_name>;
 
