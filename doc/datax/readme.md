@@ -69,92 +69,41 @@ mvn -U clean package assembly:assembly -Dmaven.test.skip=true
 如下为一个模板：
 ```json
 {
-  "job": {
-    "content": [
-      {
-        "reader": {
-          "name": "hdfsreader",
-          "parameter": {
-            "column": [
-              "*"
-            ],
-            "defaultFS": "hdfs://cdh1:8020",
-            "encoding": "UTF-8",
-            "fieldDelimiter": ",",
-            "fileType": "TEXT",
-            "path": "/user/hive/warehouse/impala_test.db/*"
-          }
-        },
-        "writer": {
-          "name": "hdfswriter",
-          "parameter": {
-            "defaultFS": "hdfs://cdh6:8020",
-            "column": [
-              {
-                "name": "col1",
-                "type": "TINYINT"
-              },
-              {
-                "name": "col2",
-                "type": "SMALLINT"
-              },
-              {
-                "name": "col3",
-                "type": "INT"
-              },
-              {
-                "name": "col4",
-                "type": "BIGINT"
-              },
-              {
-                "name": "col5",
-                "type": "FLOAT"
-              },
-              {
-                "name": "col6",
-                "type": "DOUBLE"
-              },
-              {
-                "name": "col7",
-                "type": "STRING"
-              },
-              {
-                "name": "col8",
-                "type": "VARCHAR"
-              },
-              {
-                "name": "col9",
-                "type": "CHAR"
-              },
-              {
-                "name": "col10",
-                "type": "BOOLEAN"
-              },
-              {
-                "name": "col11",
-                "type": "date"
-              },
-              {
-                "name": "col12",
-                "type": "TIMESTAMP"
-              }
-            ],
-            "compress": "NONE",
-            "fieldDelimiter": "$",
-            "fileName": "htgy_2017",
-            "fileType": "ORC",
-            "path": "/odps/sdata_chq/s010_acct_loan",
-            "writeMode": "append"
-          }
+    "job": {
+        "content": [
+            {
+                "reader": {
+                    "name": "hdfsreader",
+                    "parameter": {
+                        "column": [],
+                        "defaultFS": "",
+                        "encoding": "UTF-8",
+                        "fieldDelimiter": ",",
+                        "fileType": "orc",
+                        "path": ""
+                    }
+                },
+                "writer": {
+                    "name": "hdfswriter",
+                    "parameter": {
+                        "column": [],
+                        "compress": "",
+                        "defaultFS": "",
+                        "fieldDelimiter": "",
+                        "fileName": "",
+                        "fileType": "",
+                        "path": "",
+                        "writeMode": ""
+                    }
+                }
+            }
+        ],
+        "setting": {
+            "speed": {
+                "channel": ""
+            }
         }
-      }
-    ],
-    "setting": {
-      "speed": {
-        "channel": "3"
-      }
     }
-  }
 }
 ```
 
