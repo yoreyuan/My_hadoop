@@ -18,6 +18,15 @@ lscpu | grep -i mhz
 # BogoMips额定功率
 lscpu | grep -i bogo
 
+# 总核数 = 物理CPU个数 X 每颗物理CPU的核数 
+# 总逻辑CPU数 = 物理CPU个数 X 每颗物理CPU的核数 X 超线程数
+# 查看物理CPU个数
+cat /proc/cpuinfo| grep "physical id"| sort| uniq| wc -l
+# 查看每个物理CPU中core的个数(即核数)
+cat /proc/cpuinfo| grep "cpu cores"| uniq
+# 查看逻辑CPU的个数
+cat /proc/cpuinfo| grep "processor"| wc -l
+
 
 # 3 内存
 # 使用dmidecode命令列出每根内存条和其容量
@@ -69,6 +78,15 @@ netstat -r
 dmidecode -t bios
 # 内核信息
 uname -a
+
+```
+
+# 系统信息
+```bash
+lsb_release -a
+cat /etc/os-release
+
+
 
 ```
 
