@@ -138,7 +138,7 @@ Impala支持大多数`SQL-92 SELECT`语句语法，以及其他`SQL-2003`分析�
 
 Impala 是一个大规模并行查询执行引擎，可在现有 Hadoop 集群中的数百台计算机上运行。 与传统的关系数据库管理系统(RDBMS)不同，它与底层存储引擎分离，其中查询处理和底层存储引擎是单个紧耦合系统的组件。 Impala 的高级架构如 [图1]() 所示。
 
-![Figure 1 - 图1](../doc/image/impala-Figure-1.png)
+![Figure 1 - 图1](../image/impala-Figure-1.png)
 
 > An Impala deployment is comprised of three services. The Impala daemon (impalad) service is dually responsible for accepting queries from client processes and orchestrating their execution across the cluster, and for executing individual query fragments on behalf of other Impala daemons. When an Impala daemon operates in the first role by managing query execution, it is said to be the coordinator for that query. However, all Impala daemons are symmetric; they may all operate in all roles. This property helps with fault-tolerance, and with load-balancing.
 
@@ -230,11 +230,11 @@ Impala 前端负责将SQL文本编译为 Impala 后端可执行的查询计划�
 
 所有聚合当前都作为本地预聚合执行，然后执行合并聚合操作。 对于分组聚合，预聚合输出在分组表达式上分区，并且合并聚合在所有参与节点上并行完成。 对于非分组聚合，合并聚合在单个节点上完成。 Sort和top-n以类似的方式并行化：分布式本地排序/top-n之后是单节点合并操作。 基于分区表达式并行化分析表达式评估。 它依赖于其输入按` partition-by/order-by`表达式排序。 最后，分布式计划树在交换边界处分开。 计划的每个这样的部分都放在一个计划片段内，Impala的后端执行单元。 计划片段封装了计划树的一部分，该计划树在单个机器上的相同数据分区上运行。
 
-> [Figure 2](../doc/image/impala-Figure-2.png) illustrates in an example the two phases of query planning. The left side of the figure shows the single-node plan of a query joining two HDFS tables (t1, t2) and one HBase table (t3) followed by an aggregation and order by with limit (top-n). The right-hand side shows the distributed, fragmented plan. Rounded rectangles indicate fragment boundaries and arrows data exchanges. Tables t1 and t2 are joined via the partitioned strategy. The scans are in a fragment of their own since their results are immediately exchanged to a consumer (the join node) which operates on a hash-based partition of the data, whereas the table data is randomly partitioned. The following join with t3 is a broadcast join placed in the same fragment as the join between t1 and t2 because a broadcast join preserves the existing data partition (the results of joining t1, t2, and t3 are still hash partitioned based on the join keys of t1 and t2). After the joins we perform a two-phase distributed aggregation, where a pre-aggregation is computed in the same fragment as the last join. The pre-aggregation results are hash-exchanged based on the grouping keys, and then aggregated once more to compute the final aggregation result. The same two-phased approach is applied to the top-n, and the final top-n step is performed at the coordinator, which returns the results to the user.
+> [Figure 2](../image/impala-Figure-2.png) illustrates in an example the two phases of query planning. The left side of the figure shows the single-node plan of a query joining two HDFS tables (t1, t2) and one HBase table (t3) followed by an aggregation and order by with limit (top-n). The right-hand side shows the distributed, fragmented plan. Rounded rectangles indicate fragment boundaries and arrows data exchanges. Tables t1 and t2 are joined via the partitioned strategy. The scans are in a fragment of their own since their results are immediately exchanged to a consumer (the join node) which operates on a hash-based partition of the data, whereas the table data is randomly partitioned. The following join with t3 is a broadcast join placed in the same fragment as the join between t1 and t2 because a broadcast join preserves the existing data partition (the results of joining t1, t2, and t3 are still hash partitioned based on the join keys of t1 and t2). After the joins we perform a two-phase distributed aggregation, where a pre-aggregation is computed in the same fragment as the last join. The pre-aggregation results are hash-exchanged based on the grouping keys, and then aggregated once more to compute the final aggregation result. The same two-phased approach is applied to the top-n, and the final top-n step is performed at the coordinator, which returns the results to the user.
 
-[图2](../doc/image/impala-Figure-2.png) 用一个例子说明了查询计划的两个阶段。图的左侧显示了连接两个HDFS表(t1,t2)和一个HBase表(t3)的查询的单节点计划，其后是聚合和按限定条数(top-n)的排序。右侧显示分布式，分散的计划。圆角矩形表示片段边界和箭头数据交换。表t1和t2通过分区策略连接。扫描位于它们自己的片段中，因为它们的结果立即交换给在基于散列的数据分区上操作的消费者（连接节点），而表数据是随机分区的。以下与t3的连接是放置在与t1和t2之间的连接相同的片段中的广播连接，因为广播连接保留了现有数据分区（连接t1，t2和t3的结果仍然基于连接键进行散列分区t1和t2）。在连接之后，我们执行两阶段分布式聚合，其中在与最后一个连接相同的片段中计算预聚合。预聚合结果基于分组key进行散列交换，然后再次聚合以计算最终聚合结果。相同的两阶段方法应用于top-n，最后的top-n步骤在协调器处执行，协调器将结果返回给用户。
+[图2](../image/impala-Figure-2.png) 用一个例子说明了查询计划的两个阶段。图的左侧显示了连接两个HDFS表(t1,t2)和一个HBase表(t3)的查询的单节点计划，其后是聚合和按限定条数(top-n)的排序。右侧显示分布式，分散的计划。圆角矩形表示片段边界和箭头数据交换。表t1和t2通过分区策略连接。扫描位于它们自己的片段中，因为它们的结果立即交换给在基于散列的数据分区上操作的消费者（连接节点），而表数据是随机分区的。以下与t3的连接是放置在与t1和t2之间的连接相同的片段中的广播连接，因为广播连接保留了现有数据分区（连接t1，t2和t3的结果仍然基于连接键进行散列分区t1和t2）。在连接之后，我们执行两阶段分布式聚合，其中在与最后一个连接相同的片段中计算预聚合。预聚合结果基于分组key进行散列交换，然后再次聚合以计算最终聚合结果。相同的两阶段方法应用于top-n，最后的top-n步骤在协调器处执行，协调器将结果返回给用户。
 
-![Figure 2](../doc/image/impala-Figure-2.png)
+![Figure 2](../image/impala-Figure-2.png)
 
 
 # 5. BACKEND (后端)
@@ -261,7 +261,7 @@ IntVal my_func(const IntVal & v1, const IntVal & v2){
 }
 ```
 
-![Figure 3](../doc/image/impala-Figure-3.png)
+![Figure 3](../image/impala-Figure-3.png)
 
 
 ## 5.1 Runtime Code Generation (运行时代码生成器)
@@ -277,7 +277,7 @@ LLVM 是一个编译器库和相关工具的集合。 与作为独立应用程�
 
 Impala 使用运行时代码生成器来生成对性能至关重要的特定于查询版本的函数。 特别地，代码生成应用于“内循环”函数，即在给定查询中多次执行（对于每个元组）的函数，因此构成查询执行的总时间的大部分。 例如，必须为扫描的每个数据文件中的每个记录调用用于将数据文件中的记录解析为Impala的内存中元组格式的函数。 对于扫描大型表的查询，这可能是数十亿条记录或更多。 因此，此函数必须非常有效以获得良好的查询性能，甚至从函数执行中删除一些指令也会导致查询速度加快。
 
-![Figure 4](../doc/image/impala-Figure-4.png)
+![Figure 4](../image/impala-Figure-4.png)
 
 > Without code generation, inefficiencies in function execution are almost always necessary in order to handle runtime information not known at program compile time. For example, a record-parsing function that only handles integer types will be faster at parsing an integer-only file than a function that handles other data types such as strings and floating-point numbers as well. However, the schemas of the files to be scanned are unknown at compile time, and so a general-purpose function must be used, even if at runtime it is known that more limited functionality is sufficient.
 
@@ -319,7 +319,7 @@ Impala支持最流行的文件格式：Avro、RC、Sequence、纯文本和Parque
 
 如上所述，Parquet提供高压缩和高扫描效率。 [图5](#f5)（左）比较了存储在一些流行的文件格式和压缩算法组合中的缩放因子1,000的TPC-H数据库的Lineitem表的磁盘大小。 带有快速压缩的 Parquet 可实现最佳压缩效果。 类似地，[图5](＃f5)（右）显示了当数据库以纯文本，序列，RC和Parquet格式存储时，来自TPC-DS基准的各种查询的Impala执行时间。 Parquet的表现始终优于所有其他格式的5倍。
 
-![Figure 5](../doc/image/impala-Figure-5.png)
+![Figure 5](../image/impala-Figure-5.png)
 
 
 # 6. RESOURCE/WORKLOAD MANAGEMENT (资源/工作负载管理)
@@ -393,7 +393,7 @@ Llama是一个独立的守护程序，所有Impala守护程序都会向每个查
 
 [图6](＃f6)比较了四个系统在单用户运行中的性能，其中一个用户以零思考时间重复提交查询。。 Impala在所有运行的查询中优于单用户工作负载的所有备选方案。 Impala的性能优势范围为2.1x至13.0x，平均速度提高6.7倍。 实际上，与早期版本的Impala <sup> 9 </sup>相比，Hive 0.13（从平均4.9x到9x）和Presto（平均从5.3x到7.5x）的性能优势差距更大。
 
-![Figure 6](../doc/image/impala-Figure-6.png)
+![Figure 6](../image/impala-Figure-6.png)
 
 
 ## 7.3 Mutli-User Performance (多用户性能)
@@ -411,7 +411,7 @@ Impala的卓越性能在多用户工作负载中变得更加明显，这些工�
 
 从上面的比较可以看出，Impala在性能方面处于SQL-on-Hadoop系统的最前沿。 但Impala也适用于传统数据仓库设置的部署。 在[图8](#f7-8)中，我们比较了Impala与流行的商业DBMS的性能分析的柱状图，由于限制性的专有许可协议，这里称为“DBMS-Y”。 我们使用比例因子30,000（30TB原始数据）的TPC-DS数据集，并运行前面段落中提出的工作量的查询。 我们可以看到Impala的性能最高可达4.5倍，平均为2倍，只有三个查询的执行速度更慢。
 
-![Figure 7-8](../doc/image/impala-Figure-7-8.png)
+![Figure 7-8](../image/impala-Figure-7-8.png)
 
 
 # 8. ROADMAP (路线图)
