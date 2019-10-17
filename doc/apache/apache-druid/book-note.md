@@ -336,7 +336,7 @@ Druid的目标是提供一个能够在大数据集上做实时数据消费与探
 Druid是能够在同时提供性能卓越的数据实时摄入，又能提供复杂的查询性能。它是如何做到的呢？答案是通过其独到的架构设计、基于DataSource与Segment的数据结构，以及在许多系统细节上的优秀设计与实现。
 
 # 3.1 Druid架构概览
-![Figure 1 png](./druid-figure1.png)
+![Figure 1 png](druid-figure1.png)
 * **实时节点**（Realtime Node）：即摄入实时数据，以及生成Segment数据文件
 * **历史节点**（Historical Node）：加载已经生成好的数据文件，以供数据查询
 * **查询节点**（Broker Node）：对外提供数据查询服务，并同时从实时节点与历史节点查询数据，合并后返回给调用方
@@ -386,7 +386,7 @@ Druid的类LSM-tree架构中的实时节点负责消费实时数据，与经典L
 当条件满足是，缓存区里的数据会被冲写到磁盘上形成一个数据块（Segment Split），同时实时节点又会立即将新 生成的数据块加载到内存中的非堆区，因此无论是堆结果缓存区还是非堆区里的数据，
 都能够被查询节点（Broker Node）查询。
 
-[Figure 2](./druid.pdf)
+[Figure 2](../../paper/druid.pdf)
 
 同时，实时节点会周期性地将磁盘上同一个时段内生成的所有数据块合并为一个大的数据块（Segment）。这个过程在实时节点中叫做Segment Merge操作，相当于LSM-tree架构中的数据合并操作（Compaction）。
 黑帮好的Segment会立即被实时节点上传到数据文件存储库（DeepStorage）中，随后协调节点（Coordinator Node）会知道一个历史节点（Historical Node）去文件存储库，将新生成的Segment下载到其本地磁盘中。
@@ -689,7 +689,7 @@ ValueError: No JSON object could be decoded
 
 导入成功后，可以通过Pivot页面查询，浏览器访问地址 [http://localhost:9095](http://localhost:9095)
 
-![druid-pivot.png](../image/druid-pivot.png)
+![druid-pivot.png](../../image/druid-pivot.png)
 
 # 4.3 规划与部署
 从功能上可以划分为：

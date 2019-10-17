@@ -337,53 +337,53 @@ rm -rf /tmp/kafka-logs
 #### 1.1 Loading data with the data loader （使用数据加载器加载数据）
 导航到 [localhost:8888](http://localhost:8888)，然后单击控制台标题导航中的`Load data`。 选择`Local disk`。
 
-![tutorial-batch-data-loader-01.png](https://druid.apache.org/docs/latest/tutorials/img/tutorial-batch-data-loader-01.png)
+![tutorial-batch-data-loader-01.png](https://druid.apache.org/docs/latest/assets/tutorial-batch-data-loader-01.png)
 
 输入`quickstart/tutorial/`的值作为基本目录，输入`wikiticker-2015-09-12-sampled.json.gz`作为过滤器。如果需要从多个文件中提取数据，则会分离基目录和[通配符文件过滤器](https://commons.apache.org/proper/commons-io/apidocs/org/apache/commons/io/filefilter/WildcardFileFilter.html)。
 
 单击“预览”并确保您看到的数据正确无误。
 
-![tutorial-batch-data-loader-02.png](https://druid.apache.org/docs/latest/tutorials/img/tutorial-batch-data-loader-02.png)
+![tutorial-batch-data-loader-02.png](https://druid.apache.org/docs/latest/assets/tutorial-batch-data-loader-02.png)
 找到数据后，可以单击“Nextt: Parse data”转到下一步。 数据加载器将尝试自动确定数据的正确解析器。 在这种情况下，它将成功确定`json`。您可以随意使用不同的解析器选项来预览Druid将如何解析您的数据。
 
-![tutorial-batch-data-loader-03.png](https://druid.apache.org/docs/latest/tutorials/img/tutorial-batch-data-loader-03.png)
+![tutorial-batch-data-loader-03.png](https://druid.apache.org/docs/latest/assets/tutorial-batch-data-loader-03.png)
 选中`json`解析器后，单击`Next: Parse time`以确定主时间戳列为中心的步骤。 Druid的架构需要一个主时间戳列（内部存储在名为`__time`的列中）。 
 如果数据中没有时间戳请选择`Constant value`。 在我们的示例中，数据加载器将确定原始数据中的时间列是唯一可用作主时间列的候选列。
 
-![tutorial-batch-data-loader-04.png](https://druid.apache.org/docs/latest/tutorials/img/tutorial-batch-data-loader-04.png)
+![tutorial-batch-data-loader-04.png](https://druid.apache.org/docs/latest/assets/tutorial-batch-data-loader-04.png)
 单击`Next: ...`两次以跳过`Transform`和`Filter`步骤。 您无需在这些步骤中输入任何内容，因为应用摄取时间转换和过滤器超出了本教程的范围。
 
 在`Configure schema`步骤中，您可以配置将哪些维度（和指标）提取到Druid中。 这正是Druid一旦被摄取就会出现的数据。 由于我们的数据集非常小，请通过单击开关并确认更改来关闭`Rollup`。
 
-![tutorial-batch-data-loader-05.png](https://druid.apache.org/docs/latest/tutorials/img/tutorial-batch-data-loader-05.png)
+![tutorial-batch-data-loader-05.png](https://druid.apache.org/docs/latest/assets/tutorial-batch-data-loader-05.png)
 对架构满意后，单击`Next`转到`Partition`步骤，您可以在其中微调将数据划分为segment的方式。 在这里，您可以调整数据在Druid中分割成segment的方式。 由于这是一个小数据集，因此在此步骤中无需进行任何调整。
 
-![tutorial-batch-data-loader-06.png](https://druid.apache.org/docs/latest/tutorials/img/tutorial-batch-data-loader-06.png)
+![tutorial-batch-data-loader-06.png](https://druid.apache.org/docs/latest/assets/tutorial-batch-data-loader-06.png)
 点击`Tune`步骤，我们进入发布步骤，在这里我们可以指定Druid中的数据源名称。 我们将这个数据源命名为`wikipedia`。
 
-![tutorial-batch-data-loader-07.png](https://druid.apache.org/docs/latest/tutorials/img/tutorial-batch-data-loader-07.png)
+![tutorial-batch-data-loader-07.png](https://druid.apache.org/docs/latest/assets/tutorial-batch-data-loader-07.png)
 
 最后，单击`Next`以查看您的规范。这是您构建的规范。 您可以返回并在之前的步骤中进行更改，以查看更改将如何更新规范。 同样，您也可以直接编辑规范，并在前面的步骤中看到它。
 
-![tutorial-batch-data-loader-08.png](https://druid.apache.org/docs/latest/tutorials/img/tutorial-batch-data-loader-08.png)
+![tutorial-batch-data-loader-08.png](https://druid.apache.org/docs/latest/assets/tutorial-batch-data-loader-08.png)
 
 对规范满意后，单击`Submit`，将创建一个摄取任务。
 
 您将进入任务视图，重点是新创建的任务。
 
-![tutorial-batch-data-loader-09.png](https://druid.apache.org/docs/latest/tutorials/img/tutorial-batch-data-loader-09.png)
+![tutorial-batch-data-loader-09.png](https://druid.apache.org/docs/latest/assets/tutorial-batch-data-loader-09.png)
 在任务视图中，您可以单击`Refresh`几次，直到您的提取任务（希望）成功。
 
 当任务成功时，意味着它构建了一个或多个现在由数据服务拾取的segment。
 
 导航到`Datasources`视图，然后单击`refresh`，直到出现数据源（`wikipedia`）。 加载segment时可能需要几秒钟。
 
-![tutorial-batch-data-loader-10.png](https://druid.apache.org/docs/latest/tutorials/img/tutorial-batch-data-loader-10.png)
+![tutorial-batch-data-loader-10.png](https://druid.apache.org/docs/latest/assets/tutorial-batch-data-loader-10.png)
 
 一旦看到绿色（完全可用）圆圈，就可以查询数据源。 此时，您可以转到`Query`视图以对数据源运行SQL查询。
 
 由于这是一个小数据集，您只需运行`SELECT * FROM wikipedia`查询即可查看结果。
-![tutorial-batch-data-loader-11.png](https://druid.apache.org/docs/latest/tutorials/img/tutorial-batch-data-loader-11.png)
+![tutorial-batch-data-loader-11.png](https://druid.apache.org/docs/latest/assets/tutorial-batch-data-loader-11.png)
 
 点击[query tutorial]()，对新加载的数据运行一些示例查询。
 
@@ -458,10 +458,10 @@ Druid包在`quickstart/tutorial/wikipedia-index.json`中包含以下示例本机
 此规范将创建名为“wikipedia”的数据源。
 
 在任务视图中，单击`Submit task`并选择`Raw JSON task`。
-![tutorial-batch-submit-task-01.png](https://druid.apache.org/docs/latest/tutorials/img/tutorial-batch-submit-task-01.png)
+![tutorial-batch-submit-task-01.png](https://druid.apache.org/docs/latest/assets/tutorial-batch-submit-task-01.png)
 
 这将显示规范提交对话框，您可以在其中粘贴上面的规范。
-![tutorial-batch-submit-task-02.png](https://druid.apache.org/docs/latest/tutorials/img/tutorial-batch-submit-task-02.png)
+![tutorial-batch-submit-task-02.png](https://druid.apache.org/docs/latest/assets/tutorial-batch-submit-task-02.png)
 
 提交规范后，您可以按照上述相同的说明等待数据加载然后进行查询。
 

@@ -767,6 +767,377 @@ FROM KYLIN_SALES GROUP BY PART_DT ORDER BY PART_DT;
 
 ```
 
+# 5 多维分析的Cube创建实战
+下面的实战是一个事实表多张维度表的模型，但很多时候我们可能涉及到多张事实表，这时我们可以先在Hive中进行一些预处理，产生一张较大的实时表，
+或者使用视图来处理，用视图作为多张事实表的处理逻辑。另外还有如果我们在处理的时候，有时我们使用的字段可能不符合Kylin的要求
+（例如数据类型不符合要求 [DATA TYPE](https://kylin.apache.org/docs30/tutorial/sql_reference.html#DATATYPE)），此时也可以通过视图来处理，
+将一个字段类型转换为需要的类型。
+
+## 5.1 准备数据
+
+**实时表**
+准备实时表数据，这里可以使用这个程序模拟一份数据 [CreateData.java](../../kylin/kylin-demo/src/main/java/yore/CreateData.java)。
+生成的数据的文件`fact_data.txt`的数据格式如下：
+```
+2016-03-19|QEFND7FVAXYJJZQASW|G03|G0302|4460|Window 7|5
+2016-03-04|AXK104QG12DCC9WFIS|G03|G0301|4884|Android 5.0|8
+2016-03-25|8B9E50AYZQIY3RQ33P|G01|G0102|4167|Mac OS|9
+```
+
+SQL语句如下：
+```sql
+-- 1 建库
+0: jdbc:hive2://localhost:10000> CREATE DATABASE kylin_flat_db;
+
+-- 2 查看库
+0: jdbc:hive2://localhost:10000> SHOW DATABASES;
++----------------+
+| database_name  |
++----------------+
+| default        |
+| kylin_flat_db  |
++----------------+
+
+-- 3 建表
+0: jdbc:hive2://localhost:10000> CREATE TABLE kylin_flat_db.web_access_fact_tb1(
+. . . . . . . . . . . . . . . .> day DATE,
+. . . . . . . . . . . . . . . .> cookie_id STRING,
+. . . . . . . . . . . . . . . .> region_id STRING,
+. . . . . . . . . . . . . . . .> city_id STRING,
+. . . . . . . . . . . . . . . .> site_id STRING,
+. . . . . . . . . . . . . . . .> os STRING,
+. . . . . . . . . . . . . . . .> pv BIGINT
+. . . . . . . . . . . . . . . .> )ROW FORMAT DELIMITED 
+. . . . . . . . . . . . . . . .> FIELDS TERMINATED BY '|' 
+. . . . . . . . . . . . . . . .> STORED AS TEXTFILE;
+
+-- 4 使用库
+0: jdbc:hive2://localhost:10000> USE kylin_flat_db;
+
+-- 5 加载数据到表 web_access_fact_tb1
+0: jdbc:hive2://localhost:10000> LOAD DATA LOCAL INPATH "/opt/apache-kylin-2.6.3-bin-hadoop3/fact_data.txt" 
+. . . . . . . . . . . . . . . .> INTO TABLE web_access_fact_tb1;
+
+-- 6 查看导入的数据
+0: jdbc:hive2://localhost:10000> SELECT day,cookie_id,region_id,city_id,site_id,os,pv FROM web_access_fact_tb1 LIMIT 3;
++-------------+---------------------+------------+----------+----------+--------------+-----+
+|     day     |      cookie_id      | region_id  | city_id  | site_id  |      os      | pv  |
++-------------+---------------------+------------+----------+----------+--------------+-----+
+| 2016-03-25  | 0XM8YSCUIS0YJ6QN0N  | G03        | G0302    | 3433     | Mac OS       | 8   |
+| 2016-03-19  | YS6RXER9BQQ4VIT0RL  | G03        | G0302    | 9783     | Window 7     | 6   |
+| 2016-03-20  | BV7J636SG3K59MZGPO  | G03        | G0302    | 3878     | Android 5.0  | 8   |
++-------------+---------------------+------------+----------+----------+--------------+-----+
+
+```
+
+**region维表**
+数据文件`region.txt`的数据如下：
+```
+G01|北京
+G02|江苏
+G03|浙江
+G04|上海
+G05|广州
+```
+
+SQL语句如下：
+```sql
+-- 1 使用库
+0: jdbc:hive2://localhost:10000> USE kylin_flat_db;
+
+-- 2 建表
+0: jdbc:hive2://localhost:10000> CREATE TABLE region_tb1(
+. . . . . . . . . . . . . . . .> region_id STRING,
+. . . . . . . . . . . . . . . .> region_name STRING
+. . . . . . . . . . . . . . . .> )ROW FORMAT DELIMITED 
+. . . . . . . . . . . . . . . .> FIELDS TERMINATED BY '|' 
+. . . . . . . . . . . . . . . .> STORED AS TEXTFILE;
+
+-- 3 加载数据到表 region_tb1
+0: jdbc:hive2://localhost:10000> LOAD DATA LOCAL INPATH "/opt/apache-kylin-2.6.3-bin-hadoop3/region.txt" 
+. . . . . . . . . . . . . . . .> INTO TABLE region_tb1;
+
+-- 4 查看数据
+0: jdbc:hive2://localhost:10000> SELECT region_id,region_name FROM region_tb1;
++------------+--------------+
+| region_id  | region_name  |
++------------+--------------+
+| G01        | 北京           |
+| G02        | 江苏           |
+| G03        | 浙江           |
+| G04        | 上海           |
+| G05        | 广州           |
++------------+--------------+
+
+```
+
+**city维表**
+数据文件`city.txt`的数据如下：
+```
+G01|G0101|朝阳
+G01|G0102|海淀
+G02|G0201|南京
+G02|G0202|宿迁
+G03|G0301|杭州
+G03|G0302|嘉兴
+G04|G0401|徐汇
+G04|G0402|虹口
+G05|G0501|广州
+G05|G0502|深圳
+```
+
+SQL语句如下：
+```sql
+-- 1 使用库
+0: jdbc:hive2://localhost:10000> USE kylin_flat_db;
+
+-- 2 建表
+0: jdbc:hive2://localhost:10000> CREATE TABLE city_tb1(
+. . . . . . . . . . . . . . . .> region_id STRING,
+. . . . . . . . . . . . . . . .> city_id STRING,
+. . . . . . . . . . . . . . . .> city_name STRING
+. . . . . . . . . . . . . . . .> )ROW FORMAT DELIMITED 
+. . . . . . . . . . . . . . . .> FIELDS TERMINATED BY '|' 
+. . . . . . . . . . . . . . . .> STORED AS TEXTFILE;
+
+-- 3 加载数据到表 city_tb1
+0: jdbc:hive2://localhost:10000> LOAD DATA LOCAL INPATH "/opt/apache-kylin-2.6.3-bin-hadoop3/city.txt" 
+. . . . . . . . . . . . . . . .> INTO TABLE city_tb1;
+
+-- 4 查看数据
+0: jdbc:hive2://localhost:10000> SELECT region_id,city_id,city_name FROM city_tb1;
++------------+----------+------------+
+| region_id  | city_id  | city_name  |
++------------+----------+------------+
+| G01        | G0101    | 朝阳         |
+| G01        | G0102    | 海淀         |
+| G02        | G0201    | 南京         |
+| G02        | G0202    | 宿迁         |
+| G03        | G0301    | 杭州         |
+| G03        | G0302    | 嘉兴         |
+| G04        | G0401    | 徐汇         |
+| G04        | G0402    | 虹口         |
+| G05        | G0501    | 广州         |
+| G05        | G0502    | 深圳         |
++------------+----------+------------+
+
+```
+
+## 5.2 创建Cube
+### 5.2.1 Kylin中建立Project
+新建一个Project，如下图所示，点击图中红色框中的`➕`。
+![item-01.png](../image/kylin/item-01.png)
+
+在弹出的对话框，输入项目的名字（字母、数字、下划线），然后单击Submit，如下图所示。
+之后点击OK，创建成功会自动选择进入刚才我们创建的myproject_pvuv项目。
+![item-02.png](../image/kylin/item-02.png)
+
+
+```sql
+-- 注意，在Hive中执行SQL时记得加上日期的条件
+0: jdbc:hive2://localhost:10000> SELECT DAY, REGION_NAME, CITY_NAME, SUM(PV), COUNT(DISTINCT COOKIE_ID)
+. . . . . . . . . . . . . . . .> FROM WEB_ACCESS_FACT_TB1 a
+. . . . . . . . . . . . . . . .> LEFT JOIN CITY_TB1 b
+. . . . . . . . . . . . . . . .> ON a.city_id = b.city_id
+. . . . . . . . . . . . . . . .> LEFT JOIN REGION_TB1 c
+. . . . . . . . . . . . . . . .> ON c.REGION_ID = a.REGION_ID
+. . . . . . . . . . . . . . . .> where DAY >= '2016-03-01' AND DAY < '2016-03-02'
+. . . . . . . . . . . . . . . .> GROUP BY DAY,REGION_NAME,CITY_NAME;
++-------------+--------------+------------+------+------+
+|     day     | region_name  | city_name  | _c3  | _c4  |
++-------------+--------------+------------+------+------+
+| 2016-03-01  | 浙江           | 嘉兴         | 8    | 1    |
+| 2016-03-01  | 江苏           | 宿迁         | 1    | 1    |
+| 2016-03-01  | 北京           | 朝阳         | 6    | 1    |
+| 2016-03-01  | 浙江           | 杭州         | 3    | 1    |
++-------------+--------------+------------+------+------+
+4 rows selected (49.364 seconds)
+
+```
+
+### 5.2.2 Kylin中建立数据源
+如下图所示，如果没有选择刚才创建的Project，①先选择myproject_pvuv项目；②单击Data Source；③选择加载数据方式。
+![item-03.png](../image/kylin/item-03.png)
+
+从上面图可以看到③加载数据时有三个图标可供选择：第一图标是Load Table、第二个图标是Load Table From Tree、第三个图标是Add Streaming Table。
+第三个图标的数据格式必须是Json，这里不重点介绍这种方式，读者可以查看官方文档[Scalable Cubing from Kafka](https://kylin.apache.org/docs30/tutorial/cube_streaming.html)，
+从Kafka中定义Streaming Table，完成准实时的Cube构建。这里主要是从Hive中构建，因此主要使用前两种方式。第一种方式手工填写需要同步的表名，
+多个表名之间使用英文逗号分隔：`kylin_flat_db.web_access_fact_tb1,kylin_flat_db.region_tb1,kylin_flat_db.city_tb1`。第二种方式是通过在页面选择树形的表结构图，
+来选择需要同步的表，为了防止输错表名，推荐使用这种方式，点击后如下图所示，会直接显示Hive中的库和表信息，点击需要同步的表（会加粗显示），最后单击Sync同步，右下角有提示Success。
+![item-04.png](../image/kylin/item-04.png)
+
+建立数据模型。如下图所示，选择Model，单击New之后选择New Model。接下来会进入创建Mode的步骤。
+![item-05.png](../image/kylin/item-05.png)
+
+①Model Info。填写Model的名字，例如myproject_pvuv_model（字母、数字、下划线），填写完成之后，点击Next，如下图所示。
+![item-06.png](../image/kylin/item-06.png)
+
+②Data Model。先在Fact Table中选择我们的事实表`KYLIN_FLAT_DB.WEB_ACCESS_FACT_TB1`。接下来需要我们单击➕Add Lockup Table按钮，选择事实表和维度表的关联方式（left join或inner join），
+再单击➕New Join Condition选择两个表的关联的条件，如下图所示，最后选择OK，完成一个事实表和维表的设置。
+![item-07.png](../image/kylin/item-07.png)
+
+接下来同样的方式依次完成其它维表和实时表的设置，如下图所示，最后选择OK完成city维度表的设置。
+![item-08.png](../image/kylin/item-08.png)
+
+设置完毕后如下图所示，我们就可以点击Next进入下一步了。
+![item-09.png](../image/kylin/item-09.png)
+
+③Dimensions。选择每个表的维度（创建Cube时用到的字段），如下图所示，单击Next下一步。
+![item-10.png](../image/kylin/item-10.png)
+
+④Measures。选择度量指标字段,选择完毕后单击Next，如下图所示。
+![item-11.png](../image/kylin/item-11.png)
+
+⑤Settings。设置Cube增量刷新的分区字段，字段类型可以为Date、Timestamp、String、Varchar等。如果分区字段为空，那么会每次全量刷新Cube。如果我们的分区字段的值比较特殊，比如日期和时间时分开的，
+那么我们还需要指定额外独立的时间字段，如下图指定另外一个时间字段，再指定时间的格式。这里我们不需要额外设置分区，选择事实表的Day字段作为分区。最后填写过滤条件，如下图所示。最后单击Save保存模型。
+![item-12.png](../image/kylin/item-12.png)
+
+在创建模型是我们可以明显的看到这是一个星型模型。
+
+
+**模型检查**。我们可以对创建的模型进行一些检查，看是否存在问题。点击我们创建的模型`myproject_pvuv_model`，会弹出如下窗口，如下图所示。
+![item-13.png](../image/kylin/item-13.png)
+
+这里我们可以看到有三种查看方式，分别为Grid（表格）、Visualization（可视化）、JSON（JSON格式）。
+
+Grid（表格）查看，如下图所示，和我们刚才创建的步骤基本差不多。对每个过程进行检查即可。
+![item-14.png](../image/kylin/item-14.png)
+
+Visualization（可视化）查看，如下图所示，将事实表和维度表以可视化的关系展示。
+![item-15.png](../image/kylin/item-15.png)
+
+JSON（JSON格式）查看，如下图所示，以JSON格式配置了Model模型中的表关联、维度字段、度量字段、Cube刷新方式、过滤条件等信息。
+![item-16.png](../image/kylin/item-16.png)
+
+**Kylin中建立Cube**。正如这节的标题，构建Cube是这个过程的核心。如下图所示选择New Cube，进入Cube创建的过程。
+![item-17.png](../image/kylin/item-17.png)
+
+①Cube Info。在Mode Name栏选择我们前面创建的Mode名字`myproject_pvuv_model`。在Cube Name栏填写这个Cube的名字，例如`pvuv_cube` 。如果需要Email通知Cube的时间，
+填写notification相关信息，包括邮箱列表、事件级别（这几个都是非必须填写的）。如下图所示，填写完毕后点击Next。
+![item-18.png](../image/kylin/item-18.png)
+
+②Dimensions。这是一个比较重要的步骤。事实表部分选择所有字段，可以在Name输入中文名字，也可以默认。region维度表只选择REGION_NAME字段，维度类型为Derived。
+city维度表只选择CITY_NAME字段，维度类型为Derived。如下图所示。
+![item-19.png](../image/kylin/item-19.png)
+
+在维度类型定义时可供我们选择的有两种类型：Normal和Derived。我们可以知道一个3维度的组合有8个，4给维度的组合有16个，每个维度的组合就是一个Cuboid，
+同时我们又称每一个维度中的成员个数为Cardinality，我们是要尽量避免存储Cardinality比较高的维度的组合。
+
+Normal类型，这种是最常见的类型，它会与所有其它的dimension组合构成Cuboid。
+
+Derived类型，它是通过 derived dimensions（衍生维度）的查找表获取维度。如果在某张维度表上有多个维度，该维度表对应的一个或多个列可以和维度表的主键是一对一的，
+那么我们可以将其设置为Derived Dimension（只能由Lookup的列生成）。在Kylin内部会统一用维度表的主键来替换，此时来达到降低维度组合的数目（Cuboid数量），
+但是这样在一定程度上会降低查询效率，在查询时，Kylin使用维度表主键进行聚合后，再通过主键和真正维度列的映射关系做一次转换，在Kylin内部再对结果集做一次聚合后返回给用户。
+这里涉及到Kylin维度的优化，这部分不是本节的重点。
+
+③Measures。这里可以通过➕Measure图标来增加度量值，如下图所示，我们添加了2个度量值：PV、UV，PV对事实表的PV字段进行SUM计算，
+UV是对事实表的COOKIE_ID进行COUNT DISTINCT去重统计。设置完毕后单击Next，进入下一步。
+![item-20.png](../image/kylin/item-20.png)
+
+在选择Expression时，我们可以选择SUM、MIN、MAX、COUNT、COUNT_DISTINCT、TOP_N、EXTENDED_COLUMN、PERCENTILE函数来处理，并不支持例如AVG等相对复杂的聚合函数，
+主要是因为它需要局域缓存的Cube做增量计算并且合并成新的Cube，而这些复杂的聚合函数并不能简单地对两个值计算之后得到新的值，例如需要增量合并的两个Cube中某一个Key对应的SUM值分别为A和B，
+那么合并之后的则为A+B，而如果此的聚合函数是AVG，那么我们必须知道这个Key的COUNT和SUM之后才能做聚合，这就要去使用者必须自己额外进行计算。
+
+在我们选择的Expression为COUNT_DISTINCT聚合函数时，Return Type提供的返回值类型主要可以分为两类，精确和不精确类型。在以前版本的Kylin中使用COUNT_DISTINCT时，
+采用的是HyperLogLog（近似的Count Distinct算法），可以指定错误率，错误率越低，占用的存储越大，Build耗时越长。后来Kylin基于Bit-Map算法实现精度COUNT_DISTINCT，
+但也仅仅支持整数Integer家族（int、bigint）的字段类型，字符类型暂时不支持。
+
+④Refresh Setting。这个部分主要是用来设置增量Cube合并信息。默认为每隔7天就Merge增量的Segments（每个Segment逻辑上对应着一个物理Cube），每隔28天就Merge前面7天合并的Segments，
+也可以根据情况自定义适合自己的Merge策略。Retention Threshold默认为0，保留所有历史的Cube Segments，我们也可以设置保留最新的多少天的Cube Segments。
+Partition Start Date为Cube增量刷新的开始时间，根据我们的业务需求设计需要从那天开始计算Cube。如下图所示，设置完毕后，单击Next。
+![item-21.png](../image/kylin/item-21.png)
+
+⑤Advanced Setting。这部分主要是对Cube的进行高级设置，这部分内容比较多，我们接下来分成几个部分分别来进行介绍。
+
+Aggregation Groups。如下图所示，这个一个将维度进行分组，以求达到降低纬度组合数目的手段。不同的分组的维度之间组成的Cuboid数量会大大降低，维度组合会从2<sup>n1+n2+⋯</sup>降低为2<sup>n1+2^n2+⋯</sup>，
+Group的优化措施与查询SQL紧密依赖，可以说是为了查询定制的优化。如果查询的维度是跨Group的，那么Kylin需要以较大的代价从N-Cuboid中聚合得到所需要的查询结果，这需要我们在Cube构建是仔细考虑和评估。
+![item-22-1.png](../image/kylin/item-22-1.png)
+
+换个角度来说，通过划分到不同的维度组，从而让不出现在一个查询中的两个维度不计算Cuboid，这其实相当于把一个Cube的数据结构划分成多个不同的书，可以在不降低查询性能的情况下减少Cuboid的计算量。
+* **Includes**：此属性用于指定包含在Aggregation Groups的维度。属性的值必须是一个完整的子集维度，尽量保持维度最小并只包含必要的维度。
+* **Mandatory Dimensions**：如果每次查询的GROUP BY中都会携带某维度，那么我们可以将这个维度设置为Mandatory，这样就可以将Dimensions组合数量减少一半。
+* **Hierarchy Dimensions**：一系列具有层次关系的Dimensions组成一个Hierarchy，比如年、月、日组成了一个Hierarchy，在Cube中，如果不设置Hierarchy，会有年、月、日、年月、年日、月日6个Cuboid，
+但是设置了Hierarchy之后Cuboid增加了一个约束，希望低Level的Dimensions一定要伴随高Level的Dimensions一起出现。设置了Hierarchy Dimensions可以使得需要计算的维度组合大大减少。
+* **Joint Dimensions**：这是一个新引入的规则，如果两个或者更多个维度是Joint，那么任何有效的Cuboid都不包含这些维度，要么包含所有维度。换句话说，这些维度将始终在一起，
+当多维数据集设计时肯定有某些维度总是会在一起查询，这将非常有用。
+
+Rowkeys。主要是对HBase的Rowkey进行设计，如下图所示，默认Rowkey是由维度的值进行组合的，我们也可以继续添加Rowkey组合的字段，一般不需要修改，使用默认即可。
+![item-22-2.png](../image/kylin/item-22-2.png)
+
+Kylin的Cube数据是使用Kye-Value结构存储在HBase中，其中Key是每一个维度成员的组合值，不同的Cuboid下面的Key的结果是不一样的，例如`Cuboid={time,location,product}`下面的
+一个Key可能是`time=’2016’,location=’Nanjing’,product=’IPhone6s’`，那么这个Key就可以写成`2016:Nanjing:Iphone6s`，但是如果使用这种方式的话会出现很多重复，
+所以一般情况下我们会把一个维度下的所有成员取出来，然后保存在一个数组里面，然后使用数组的下标组合成为一个Key，这样可以大大节省Key的存储空间，Kylin就是使用形同的方式，
+只不过使用了字典树，每一个维度的字典树作为Cube的元数据以二进制的方式存储在HBase中。
+
+Cube Engine。可以选择Cube使用的计算引擎，这里可以选择使用MapReduce和Spark。
+
+Advanced Setting这部分其它的设置我们默认就行，这里不过多介绍了，点击Next，进入下一步的设置。
+
+⑥Configuration Overwrites。主要是对Cube级别的参数进行设置，如下图所示，点击➕Property，可以设置Cube级别的参数值，
+此处设置的参数值将会覆盖`kylin.properties`文件中的值。这里我们暂时不需要设置，直接点击Next。
+![item-23.png](../image/kylin/item-23.png)
+
+⑦Overview。这里列出了创建Cube的一些统计信息，如下图所示，如果确定没有问题的话，直接单击Save，在弹出的对话框单击Yes，完成这个Cube的创建。
+![item-24.png](../image/kylin/item-24.png)
+
+在创建完Cube，同样我们可以对创建的Cube进行查看和检查，如下图所示，我们可以选择Grid、SQL、JSON(Cube)、Notification、Storage、Planner进行查看。
+![item-25.png](../image/kylin/item-25.png)
+
+
+### 5.2.2 Build Cube
+通过上一部分我们已经创建了Cube，接下来我么就可以对Cube进行Build了。这里我们在7.5节中也提到过，针对创建的Cube我们可以在Actions下选择Drop、Edit、Build、Refresh、Merge、
+Lookup Refresh、Enable、Delete Segment、Purge、Clone操作，这里不进行详细介绍了，这里我们直接选择Build操作开始Build Cube，如下图所示。
+在弹出的CUBE BUILD CONFIRM对话框的End Date (Exclude)处填写2016-03-02 00:00:00（主要是为了演示），然后点击Submit。
+![item-26.png](../image/kylin/item-26.png)
+
+切换到Monitor界面，查看刚才我们提交的Job，如下图所示,已经成功执行完毕。同时查看Model页面可以看到前面创建的pvuv_cube已经处于READY状态。
+![item-27.png](../image/kylin/item-27.png)
+
+如果我们的Cube是Build成功的，处于READY状态的，我们可以Cube下的详细信息里可以看到Storage的信息。此Cube数据存储在HBase的表KYLIN_VUH1VYBW6C,我们登陆hbase shell后也可以看到这个表。
+![item-28.png](../image/kylin/item-28.png)
+
+
+### 5.2.3 查询
+例如现在有个需求，就是查询时间在2016-03-01当天的网站访问信息，统计出每个省份每个城市的页面访问量（Page View，PV）和产生的cookie的数量。在查询我们在Kylin中Cube构建的结果之前，
+可以按照正常方式在Hive中查询，我们在Hive中执行如下SQL。可以看到执行的整个过程差不多花了将近40秒，
+```sql
+-- 注意，在Hive中执行SQL时记得加上日期的条件
+0: jdbc:hive2://localhost:10000> SELECT DAY, REGION_NAME, CITY_NAME, SUM(PV), COUNT(DISTINCT COOKIE_ID)
+. . . . . . . . . . . . . . . .> FROM WEB_ACCESS_FACT_TB1 a
+. . . . . . . . . . . . . . . .> LEFT JOIN CITY_TB1 b
+. . . . . . . . . . . . . . . .> ON a.city_id = b.city_id
+. . . . . . . . . . . . . . . .> LEFT JOIN REGION_TB1 c
+. . . . . . . . . . . . . . . .> ON c.REGION_ID = a.REGION_ID
+. . . . . . . . . . . . . . . .> where DAY >= '2016-03-01' AND DAY < '2016-03-02'
+. . . . . . . . . . . . . . . .> GROUP BY DAY,REGION_NAME,CITY_NAME;
++-------------+--------------+------------+------+------+
+|     day     | region_name  | city_name  | _c3  | _c4  |
++-------------+--------------+------------+------+------+
+| 2016-03-01  | 浙江           | 嘉兴         | 8    | 1    |
+| 2016-03-01  | 江苏           | 宿迁         | 1    | 1    |
+| 2016-03-01  | 北京           | 朝阳         | 6    | 1    |
+| 2016-03-01  | 浙江           | 杭州         | 3    | 1    |
++-------------+--------------+------------+------+------+
+4 rows selected (39.364 seconds)
+
+```
+
+现在我们对这个需求已经事先有了了解，这道数据查询时间范围只有2016-03-01这一天的，因此我们前面经过一系列的处理创建了这个需求的Cube，并成功Build，因此我们可以在Kylin的Web页面点击页头的Insight，
+对我们的Cube构建结果进行查询，在页面中填入如下的SQL，并Submit执行。最终在Kylin下只花费了零点几秒就执行完毕了，结果也显示到Web 页面，这个结果和前面Hive中处理的结果是一样的，
+因此可以看到Kylin经过一系列处理之后的查询效率确实提升了很多。注意看下这两个SQL是有一些略微区别的。
+
+```sql
+SELECT "DAY", REGION_NAME, CITY_NAME, SUM(PV), COUNT(DISTINCT COOKIE_ID)
+FROM WEB_ACCESS_FACT_TB1 a
+LEFT JOIN CITY_TB1 b
+ON a.city_id = b.city_id
+LEFT JOIN REGION_TB1 c
+ON c.REGION_ID = a.REGION_ID
+GROUP BY "DAY",REGION_NAME,CITY_NAME;
+
+```
+
+![item-29.png](../image/kylin/item-29.png)
 
 
 # 案例

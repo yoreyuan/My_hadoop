@@ -1,3 +1,5 @@
+Apache Kudu
+===
 
 # 一、Kudu概述
 ## GitHub
@@ -290,7 +292,7 @@ TBLPROPERTIES(
 )
 Fetched 0 row(s) in 1.22s
 ``` 
-![java_example-timestamp-detail](kudu_demo/src/main/resources/java_example-timestamp-detail.png)
+![java_example-timestamp-detail](../../kudu/kudu_demo/src/main/resources/java_example-timestamp-detail.png)
 
 ### 插入数据
 运行 `Example.insertRows(client, "java_example_1556593492110", 33);`
