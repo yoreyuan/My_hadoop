@@ -116,4 +116,13 @@ DROP FUNCTION <function_name>;
 
 ```
 
+# SQL限制
+[限制项](https://www.alibabacloud.com/help/zh/doc-detail/51823.html?spm=a2c5t.10695662.1996646101.searchclickresult.19467e56ScYMP8)
+
+边界名 |	最大值/限制条件 | 	分类 |	说明
+:---- | :---- | ---- | ----
+表的列定义 | 	1200个 | 	数量限制 |	单表的列定义个数最多1200个。
+MAPJOIN内存限制 | 	512M |	数量限制 | 	MAPJOIN所有小表的内存限制不能超过512M。
+SQL语句长度 | 	2M | 	长度限制 |	允许的SQL语句的最大长度。包括您使用SDK调用SQL的场景。
+
 

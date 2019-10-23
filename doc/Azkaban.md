@@ -100,7 +100,7 @@ git branch
 ```
 
 ## 1.4 编译中问题解决
-如果提示如下错误`llect2: fatal error: cannot find 'ld'`：
+**问题1**：如果提示如下错误`llect2: fatal error: cannot find 'ld'`：
 ```
 Starting a Gradle Daemon (subsequent builds will be faster)
 Parallel execution with configuration on demand is an incubating feature.
@@ -185,6 +185,77 @@ lrwxrwxrwx 1 root root      20 Aug 19 19:00 ld -> /etc/alternatives/ld
 -rwxr-xr-x 1 root root    5302 Jul  3 21:25 ldd
 -rwxr-xr-x 1 root root 5354296 Oct 30  2018 ld.gold
 ```
+
+**问题2**：编译时过程中获取`com.gradle.build-scan`插件发生错误。
+```log
+FAILURE: Build failed with an exception.
+* Where:
+Build file '/root/azkaban/build.gradle' line: 31
+* What went wrong:
+Plugin [id: 'com.gradle.build-scan', version: '1.9'] was not found in any of the following sources:
+- Gradle Core Plugins (plugin is not in 'org.gradle' namespace)
+- Plugin Repositories (could not resolve plugin artifact 'com.gradle.build-scan:com.gradle.build-scan.gradle.plugin:1.9')
+  Searched in the following repositories:
+    Gradle Central Plugin Repository
+```
+解决：
+```bash
+# 1 下载 build-scan-plugin 1.9 的资源包
+wget https://plugins.gradle.org/m2/com/gradle/build-scan-plugin/1.9/build-scan-plugin-1.9.jar
+
+# 2 上传到azkaban 编译服务器上
+
+# 3 手动导入Maven本地仓库
+mvn install:install-file -DgroupId=com.gradle -DartifactId=build-scan-plugin -Dversion=1.9 -Dpackaging=jar -Dfile=build-scan-plugin-1.9.jar
+```
+
+**问题3**：报`com.moowork.gradle:gradle-node-plugin:1.2.0`缺失。
+```log
+FAILURE: Build failed with an exception.
+* Where:
+Build file '/root/azkaban/azkaban-solo-server/build.gradle' line: 43
+* What went wrong:
+A problem occurred evaluating project ':azkaban-solo-server'.
+> A problem occurred configuring project ':azkaban-web-server'.
+   > Could not resolve all artifacts for configuration ':azkaban-web-server:classpath'.
+      > Could not resolve com.moowork.gradle:gradle-node-plugin:1.2.0.
+        Required by:
+            project :azkaban-web-server > com.moowork.node:com.moowork.node.gradle.plugin:1.2.0
+         > Could not resolve com.moowork.gradle:gradle-node-plugin:1.2.0.
+            > Could not get resource 'https://plugins.gradle.org/m2/com/moowork/gradle/gradle-node-plugin/1.2.0/gradle-node-plugin-1.2.0.pom'.
+               > Could not GET 'https://plugins.gradle.org/m2/com/moowork/gradle/gradle-node-plugin/1.2.0/gradle-node-plugin-1.2.0.pom'.
+                  > plugins-artifacts.gradle.org: Name or service not known
+         > Could not resolve com.moowork.gradle:gradle-node-plugin:1.2.0.
+            > Could not get resource 'https://plugins.gradle.org/m2/com/moowork/gradle/gradle-node-plugin/1.2.0/gradle-node-plugin-1.2.0.pom'.
+               > Could not GET 'https://plugins.gradle.org/m2/com/moowork/gradle/gradle-node-plugin/1.2.0/gradle-node-plugin-1.2.0.pom'.
+                  > plugins-artifacts.gradle.org
+* Try:
+Run with --stacktrace option to get the stack trace. Run with --info or --debug option to get more log output. Run with --scan to get full insights.
+* Get more help at https://help.gradle.org
+BUILD FAILED in 1m 25s
+```
+
+**解决**：
+```bash
+# 1 下载
+wget https://github.com/srs/gradle-node-plugin/archive/v1.2.0.zip
+
+# 2 解压
+unzip v1.2.0.zip
+
+# 3 编译
+cd gradle-node-plugin-1.2.0/
+# 这里跳过测试，如果需要测试可以执行：gradle test
+./gradlew clean build  -x test
+
+# 4 手动导入Maven仓库
+mvn install:install-file -DgroupId=com.moowork.gradle -DartifactId=gradle-node-plugin -Dversion=1.2.0 -Dpackaging=jar -Dfile=build/libs/gradle-node-plugin-1.2.0.jar
+
+# 5 记得添加完毕后返回Azkaban的源码目录，然后再次执行编译
+
+```
+
+<br/>
 
 这次OK，可以重新编译
 ```bash
