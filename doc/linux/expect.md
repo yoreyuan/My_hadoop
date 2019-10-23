@@ -108,7 +108,7 @@ make install
 
 安装 expect
 
-* TCL的下载页面可访问：[download.html](https://jaist.dl.sourceforge.net/project/expect/Expect/)
+* Expect的下载页面可访问：[download.html](https://jaist.dl.sourceforge.net/project/expect/Expect/)
 * Expect下载页面可访问： [sourceforge page](https://sourceforge.net/projects/expect/)
 
 ```bash
