@@ -258,6 +258,13 @@ scp -r $HADOOP_HOME/ root@cdh1:/opt/
 ## 1.13 格式化 NameNode
 ```bash
 $HADOOP_HOME/bin/hdfs namenode -format
+
+# 升级hadoop
+hadoop namenode -rollback 
+hadoop namenode -upgrade  
+# vim /root/.su/opt/hadoop/dfs/nn/current
+# 注释掉imageMD5Digest
+
 ```
 
 ## 1.14 启动Hadoop
