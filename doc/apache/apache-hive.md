@@ -324,7 +324,7 @@ insert into table test values(1101, "hive组件", "2019-09-06 17:03:22",2.1);
 ```
 
 
-## 2.1 加载本地文件系统数据创建一个表
+## 2.2 加载本地文件系统数据创建一个表
 将数据文件data/teacher.txt上传的hive的本地某个文件夹下，例如/home 下
 ```sql
 -- 创建一个学生表(内表),并插入数据
@@ -334,7 +334,7 @@ LOAD DATA LOCAL INPATH '/home/student.txt' OVERWRITE INTO TABLE STUDENT;
 
 ```
 
-## 2.2 加载HDFS数据创建一个表
+## 2.3 加载HDFS数据创建一个表
 已经将student.csv数据上传到HDFS的/home 下。
 ```sql
 -- 创建一个学生表(内表),并插入数据
@@ -352,16 +352,50 @@ find / -name hive-contrib-*.jar
 #可以上传到HDFS上（路径使用 hdfs://${namenode}:8020/），也可以本地(file:///) 
 ```
 
-# hive-site.xml配置
+## 2.4 关于分隔符多字符的支持
+### 2.4.1 通过使用加载Hive自带的工具类
+默认情况下，Hive对于分隔符只支持单字符，不过Hive自带一个工具jar包，这个包支持正则和多字符方式定义分隔符。
+
+* 1 查找hive自带的工具jar包位置
+```bash
+find / -name hive-contrib-*.jar
+```
+
+
+* 2 将上面搜索到的jar包配置到配置hive-site.xml文件中
 ```xml
+<!-- Apache 原生Hive版 -->
 <property>
+  <name>hive.aux.jars.path</name>
+  <value>file:///opt/apache-hive-1.2.2-bin/lib/hive-contrib-1.2.2.jar</value>
+  <description>Added by tiger.zeng on 20120202.These JAR file are available to all users for all jobs</description>
+</property>
+
+<!-- CDH Hive版 -->
+<!--<property>
   <name>hive.aux.jars.path</name>
   <value>file:///opt/cloudera/parcels/CDH-6.2.0-1.cdh6.2.0.p0.967373/lib/hive/contrib/hive-contrib-2.1.1-cdh6.2.0.jar</value>
   <description>Added by tiger.zeng on 20120202.These JAR file are available to all users for all jobs</description>
-</property>
+</property>-->
+
 ```
 
+
+
+上面配置之后可以不用重启Hive服务，只需要重新进入Hive CLI就可生效，且是永久的。也可以配置为临时的，就是在进入Hive CLI后，临时加载这个jar包，执行如下：
 ```sql
+hive> add jar file:///opt/apache-hive-1.2.2-bin/lib/hive-contrib-1.2.2.jar
+```
+
+准备如下数据，分隔符为 |#|，
+```text
+3324|#|003|#|20190816 09:16:18|#|0.00|#|2017-11-13 12:00:00
+3330|#|009|#|20190817 15:21:03|#|1234.56|#|2017-11-14 12:01:00
+```
+
+建表时如下声明与定义如下，并加载数据，查询数据：
+```sql
+-- 1 建表
 -- 如果没有上一步设置，需要手动临时导入 
 -- add jar file:///opt/cloudera/parcels/CDH-6.2.0-1.cdh6.2.0.p0.967373/lib/hive/contrib/hive-contrib-2.1.1-cdh6.2.0.jar;
 -- 例如使用 |#| 作为字段分割符，建表语句如下
@@ -375,4 +409,293 @@ createtime   TIMESTAMP COMMENT '创建时间'
 WITH SERDEPROPERTIES ("field.delim"="|#|")
 STORED AS TEXTFILE;
 
+-- 2 加载数据
+LOAD DATA LOCAL INPATH '/root/split_test.txt'  OVERWRITE INTO TABLE split_test;
+
+-- 3 查询结果如下：
+hive> select * from split_test;
+OK
+3324    003     20190816 09:16:18       0.0     2017-11-13 12:00:00
+3330    009     20190817 15:21:03       1234.56 2017-11-14 12:01:00
+Time taken: 0.11 seconds, Fetched: 2 row(s)
+
 ```
+
+### 2.4.2 通过修改源码自定义
+自定义分隔符及多字符分隔符的问题可参阅我的blog [Hive中的自定义分隔符](https://blog.csdn.net/github_39577257/article/details/89020980) 中第三节部分。
+
+<br/>
+
+## 2.5 关于 Hive 中的 UPDATE 和 DELETE
+
+### 2.5.1 通过改造SQL的方式
+
+这里通过Impala SHELL方式（`impala-shell` 命令进入）进行操作，Impala也是可以对Hive的数据进行操作的，因为它们两个是共用的同一个元数据信息的，
+如果在Impala发现表或数据没有同步，可以手动在impala-shell执行`invalidate metadata;`通过Hive的元数据到 Impala。
+```sql
+-- 1 先查看建表语句信息
+[cdh3:21000] default> SHOW CREATE TABLE tmp_test;
+Query: SHOW CREATE TABLE tmp_test
++----------------------------------------------------------------------+
+| result                                                               |
++----------------------------------------------------------------------+
+| CREATE TABLE default.tmp_test (                                      |
+|   id INT,                                                            |
+|   name STRING                                                        |
+| )                                                                    |
+| ROW FORMAT DELIMITED FIELDS TERMINATED BY ','                        |
+| WITH SERDEPROPERTIES ('field.delim'=',', 'serialization.format'=',') |
+| STORED AS TEXTFILE                                                   |
+| LOCATION 'hdfs://cdh1:8020/user/hive/warehouse/tmp_test'    |
+|                                                                      |
++----------------------------------------------------------------------+
+Fetched 1 row(s) in 0.07s
+
+-- 2 如不过没有数据可以先插入数据
+[cdh3:21000] default> INSERT INTO tmp_test VALUES(0, 'zore');
+-- 也可以一次插入多行数据
+[cdh3:21000] default> INSERT INTO tmp_test VALUES(1, 'one'), (2, 'two'), (3, 'three');
+
+-- 3 查询数据
+[cdh3:21000] default> SELECT * FROM tmp_test;
++----+-------+
+| id | name  |
++----+-------+
+| 3  | three |
+| 1  | one   |
+| 2  | two   |
+| 0  | zore  |
++----+-------+
+Fetched 4 row(s) in 0.18s
+
+-- 4 更新一条数据。将id=2的name值改为TWO
+[cdh3.ygbx.com:21000] default> INSERT OVERWRITE TABLE tmp_test
+                             > SELECT * FROM
+                             > (SELECT id,"TWO" as name FROM tmp_test WHERE id=2
+                             > UNION ALL
+                             > SELECT * FROM tmp_test WHERE id <> 2) T;
+Modified 4 row(s) in 0.32s
+-- 查看数据。发现id=2的值已经改为了TWO，更新数据成功。
+[cdh3.ygbx.com:21000] default> SELECT * FROM tmp_test;
++----+-------+
+| id | name  |
++----+-------+
+| 1  | one   |
+| 3  | three |
+| 0  | zore  |
+| 2  | TWO   |
++----+-------+
+Fetched 4 row(s) in 0.11s
+
+-- 5 删除数据 
+--  5.1 删除一条数据。我们删除一条id=0的数据
+[cdh3.ygbx.com:21000] default> INSERT OVERWRITE TABLE tmp_test
+                             > SELECT * FROM tmp_test WHERE id <> 0;
+Modified 3 row(s) in 0.31s
+--  查看数据，发现id=0的数据已经不再表中了（被删除了）
+[cdh3.ygbx.com:21000] default>  SELECT * FROM tmp_test;
++----+-------+
+| id | name  |
++----+-------+
+| 2  | TWO   |
+| 1  | one   |
+| 3  | three |
++----+-------+
+Fetched 3 row(s) in 0.21s
+
+--  5.2 删除多条数据。我们删除 id 为 1 和 2的数据
+[cdh3.ygbx.com:21000] default> INSERT OVERWRITE TABLE tmp_test
+                             > SELECT * from tmp_test WHERE id not in (1,2);
+Modified 1 row(s) in 0.21s
+--  查看数据，发现id=1和id=2的两条数据同时被删除，只留下id=3的数据
+[cdh3.ygbx.com:21000] default> SELECT * FROM tmp_test;
++----+-------+
+| id | name  |
++----+-------+
+| 3  | three |
++----+-------+
+Fetched 1 row(s) in 0.21s
+
+```
+
+### 2.5.2 通过修改Hive配置文件的方式
+修改hive-site.xml文件下面几项配置
+```xml
+<propertys>
+<!-- 在右更新操作时务必设置为false。因为这会生成更高效的执行计划。 
+https://cwiki.apache.org/confluence/display/Hive/LanguageManual+DML#LanguageManualDML-Update -->
+  <property>
+    <name>hive.optimize.sort.dynamic.partition</name>
+    <value>false</value>
+    <description>
+      When enabled dynamic partitioning column will be globally sorted.
+      This way we can keep only one record writer open for each partition value
+      in the reducer thereby reducing the memory pressure on reducers.
+    </description>
+  </property>
+  <property>
+    <name>hive.support.concurrency</name>
+    <value>true</value>
+    <description>
+      Whether Hive supports concurrency control or not. 
+      A ZooKeeper instance must be up and running when using zookeeper Hive lock manager 
+    </description>
+  </property>
+  <!--配置执行动态分区的模式。nonstrict：不严格模式；strict：严格模式-->
+  <property>
+    <name>hive.exec.dynamic.partition.mode</name>
+    <value>nonstrict</value>
+    <description>
+      In strict mode, the user must specify at least one static partition
+      in case the user accidentally overwrites all partitions.
+      In nonstrict mode all partitions are allowed to be dynamic.
+    </description>
+  </property>
+<property>
+    <name>hive.txn.manager</name>
+	<!--<value>org.apache.hadoop.hive.ql.lockmgr.DummyTxnManager</value>-->
+    <value>org.apache.hadoop.hive.ql.lockmgr.DbTxnManager</value>
+    <description>
+      Set to org.apache.hadoop.hive.ql.lockmgr.DbTxnManager as part of turning on Hive
+      transactions, which also requires appropriate settings for hive.compactor.initiator.on,
+      hive.compactor.worker.threads, hive.support.concurrency (true),
+      and hive.exec.dynamic.partition.mode (nonstrict).
+      The default DummyTxnManager replicates pre-Hive-0.13 behavior and provides
+      no transactions.
+    </description>
+  </property>
+  <property>
+    <name>hive.compactor.initiator.on</name>
+    <value>true</value>
+    <description>
+      Whether to run the initiator and cleaner threads on this metastore instance or not.
+      Set this to true on one instance of the Thrift metastore service as part of turning
+      on Hive transactions. For a complete list of parameters required for turning on
+      transactions, see hive.txn.manager.
+    </description>
+  </property>
+  <property>
+    <name>hive.compactor.worker.threads</name>
+    <value>1</value>
+    <description>
+      How many compactor worker threads to run on this metastore instance. Set this to a
+      positive number on one or more instances of the Thrift metastore service as part of
+      turning on Hive transactions. For a complete list of parameters required for turning
+      on transactions, see hive.txn.manager.
+      Worker threads spawn MapReduce jobs to do compactions. They do not do the compactions
+      themselves. Increasing the number of worker threads will decrease the time it takes
+      tables or partitions to be compacted once they are determined to need compaction.
+      It will also increase the background load on the Hadoop cluster as more MapReduce jobs
+      will be running in the background.
+    </description>
+  </property>
+  
+  <!-- 
+    …… 
+  -->
+
+</propertys>
+```
+
+
+
+```sql
+-- 如果创建的表都是ORC格式也可以直接在设置全局文件格式
+-- SET hive.default.fileformat=ORC
+
+-- 1 建表
+--  在没有开启事务时会报如下错误：
+--  Error: Error while compiling statement: FAILED: SemanticException [Error 10265]: This command is not allowed on an ACID table default.tmp_test with a non-ACID transaction manager. Failed command: CREATE TABLE tmp_test (
+0: jdbc:hive2://cdh5:10000> CREATE TABLE tmp_test (
+. . . . . . . . . . . . . > id INT,
+. . . . . . . . . . . . . > name STRING
+. . . . . . . . . . . . . > )ROW FORMAT DELIMITED FIELDS TERMINATED BY '║'
+. . . . . . . . . . . . . > STORED AS ORC
+. . . . . . . . . . . . . > TBLPROPERTIES('transactional'='true');
+
+
+-- 2 如果表中没有数据的插入如下数据
+0: jdbc:hive2://cdh5:10000> INSERT INTO tmp_test VALUES(0, 'zore'), (1, 'one'), (2, 'two'), (3, 'three');
+
+```
+
+我们先查看一下HDFS上这个表的数据存储的信息，如下图，可以看到开启事务之后，执行1条插入语句插入多行数据时，会自动在HDFS上改表的路径下生成一个数据目录delta_0000006_0000006_0000，
+然后在数据目录下有一个记录文件ACID的VERSION的文件，同时还有一个分桶文件，这个分桶文件的格式是个ORC的文件，我们直接打开它是一个乱码形式的，
+如果想看这个文件中的内容，可以Hive提供的工具进行查看。。
+```bash
+# 1 查看 orcfiledump 的帮助信息
+[root@node5 opt]# hive --orcfiledump  --help
+#usage ./hive orcfiledump [-h] [-j] [-p] [-t] [-d] [-r <col_ids>] [--recover] [--skip-dump] [--backup-path <new-path>] <path_to_orc_file_or_directory>
+#  --json (-j)                 Print metadata in JSON format
+#  --pretty (-p)               Pretty print json metadata output
+#  --timezone (-t)             Print writer's time zone
+#  --data (-d)                 Should the data be printed
+#  --rowindex (-r) <col_ids> Comma separated list of column ids for which row index should be printed
+#  --recover                   Recover corrupted orc files generated by streaming
+#  --skip-dump                 Used along with --recover to directly recover files without dumping
+#  --backup-path <new_path>  Specify a backup path to store the corrupted files (default: /tmp)
+#  --help (-h)                 Print help message
+
+# 2 以格式化 JSON 的方式打印 orc文件数据。
+#   schema      为每一个字段做了编号，从1开始，编号为0的columnId中描述了整个表的字段定义。
+#   stripeStatistics    这里是ORC文件中所有stripes的统计信息，其中有每个stripe中每个字段的min/max值，是否有空值等等。
+#   fileStatistics 这里是整个文件中每个字段的统计信息，该表只有一个文件，也只有一个stripe。
+#   stripes     这里列出了所有stripes的元数据信息，包括index data, row data和stripe footer。
+[root@node5 opt]# hive --orcfiledump -j -p /user/hive/warehouse/tmp_test/delta_0000006_0000006_0000/bucket_00000
+
+# 3 查看orc文件数据信息
+[root@node5 opt]# hive --orcfiledump -d /user/hive/warehouse/tmp_test/delta_0000006_0000006_0000/bucket_00000 > bucket_00000.orc.txt
+{"operation":0,"originalTransaction":6,"bucket":536870912,"rowId":0,"currentTransaction":6,"row":{"id":0,"name":"zore"}}
+{"operation":0,"originalTransaction":6,"bucket":536870912,"rowId":1,"currentTransaction":6,"row":{"id":1,"name":"one"}}
+{"operation":0,"originalTransaction":6,"bucket":536870912,"rowId":2,"currentTransaction":6,"row":{"id":2,"name":"two"}}
+{"operation":0,"originalTransaction":6,"bucket":536870912,"rowId":3,"currentTransaction":6,"row":{"id":3,"name":"three"}}
+________________________________________________________________________________________________________________________
+
+
+```
+
+接着上面的SQL继续执行
+```sql
+-- 3 查看当前表的数据
+0: jdbc:hive2://cdh5:10000> SELECT * FROM tmp_test;
++--------------+----------------+
+| tmp_test.id  | tmp_test.name  |
++--------------+----------------+
+| 0            | zore           |
+| 1            | one            |
+| 2            | two            |
+| 3            | three          |
++--------------+----------------+
+
+-- 4 更新一条数据。将id=2的name值改为TWO。
+-- 如果执行报如下错误，是Hadoop版本和Hive的版本比匹配，可以升级Hadoop版本
+--  Error: Error while processing statement: FAILED: Execution Error, return code -101 from org.apache.hadoop.hive.ql.exec.StatsTask. org.apache.hadoop.fs.FileStatus.compareTo(Lorg/apache/hadoop/fs/FileStatus;)I (state=08S01,code=-101)
+0: jdbc:hive2://cdh5:10000> UPDATE tmp_test SET name="TWO" WHERE id=2;
+-- 查看数据。发现id=2的值已经改为了TWO，更新数据成功。
+0: jdbc:hive2://cdh5:10000> SELECT * FROM tmp_test;
++--------------+----------------+
+| tmp_test.id  | tmp_test.name  |
++--------------+----------------+
+| 0            | zore           |
+| 1            | one            |
+| 3            | three          |
+| 2            | TWO            |
++--------------+----------------+
+
+-- 5 删除数据 
+--  5.1 删除一条数据。我们删除一条id=0的数据
+0: jdbc:hive2://cdh5:10000> DELETE FROM tmp_test WHERE id=0;
+--  查看数据，发现id=0的数据已经不再表中了（被删除了）
+0: jdbc:hive2://cdh5:10000> SELECT * FROM tmp_test;
++--------------+----------------+
+| tmp_test.id  | tmp_test.name  |
++--------------+----------------+
+| 1            | one            |
+| 3            | three          |
+| 2            | TWO            |
++--------------+----------------+
+
+-- 在 HIVE 3.1.2版本中还不支持删除多条数据的语法：DELETE * FROM tmp_test WHERE id in (1,2);
+
+```
+
