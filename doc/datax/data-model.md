@@ -91,6 +91,96 @@
 
 ```
 
+JOSN2。text不带压缩的
+```json
+{
+  "job": {
+    "setting": {
+      "speed": {
+        "channel": 1
+      }
+    },
+    "content": [
+      {
+        "reader": {
+          "name": "hdfsreader",
+          "parameter": {
+            "path": "/user/hive/warehouse/hive_test.db/dataxtype_test/*",
+            "defaultFS": "hdfs://cdh1:8020",
+            "fileType": "text",
+            "encoding": "UTF-8",
+            "fieldDelimiter": "|",
+            "column": [
+              {
+                "type": "Long",
+                "index": "0"
+              },
+              {
+                "type": "String",
+                "index": "1"
+              },
+              {
+                "type": "Boolean",
+                "index": "2"
+              },
+              {
+                "type": "Double",
+                "index": "3"
+              },
+              {
+                "type": "Double",
+                "index": "4"
+              },
+              {
+                "type": "Date",
+                "index": "5"
+              }
+            ]
+          }
+        },
+        "writer": {
+          "name": "hdfswriter",
+          "parameter": {
+            "defaultFS": "hdfs://cdh1:8020",
+            "fileType": "TEXT",
+            "path": "/user/hive/warehouse/kudu_test.db/dataxtype_test",
+            "fileName": "xxxx",
+            "writeMode": "append",
+            "fieldDelimiter": "?",
+            "column": [
+              {
+                "name": "f1",
+                "type": "BIGINT"
+              },
+              {
+                "name": "f2",
+                "type": "STRING"
+              },
+              {
+                "name": "f3",
+                "type": "BOOLEAN"
+              },
+              {
+                "name": "f4",
+                "type": "DOUBLE"
+              },
+			  {
+                "name": "f5",
+                "type": "FLOAT"
+              },
+              {
+                "name": " f6",
+                "type": "TIMESTAMP"
+              }
+            ]
+          }
+        }
+      }
+    ]
+  }
+}
+```
+
 
 # 
 datax.py -r mongodbreader -w hdfswriter
