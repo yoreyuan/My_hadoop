@@ -40,7 +40,7 @@ ansible --version
 
 ## 2.2 离线安装
 其中用到的包，可以到[PyPi网站](https://pypi.org/)搜索下载。
-### 2.2.1 python-devel
+### 2.2.1 安装python-devel
 先安装 python-devel ，否则安装下面时会报`fatal error: Python.h: No such file or directory`错误。
 ```bash
 # yum方式安装
@@ -51,8 +51,12 @@ wget http://mirror.centos.org/centos/7/os/x86_64/Packages/python-devel-2.7.5-86.
 wget http://mirror.centos.org/centos/7/os/x86_64/Packages/openssl-devel-1.0.2k-19.el7.x86_64.rpm
 
 # 安装
-rpm -ivh python-devel-2.7.5-86.el7.x86_64.rpm
-rpm -ivh openssl-devel-1.0.2k-19.el7.x86_64.rpm
+# 如果是普通用户需要有sudo权限
+#yum -y install python-devel-2.7.5-86.el7.x86_64.rpm
+#yum -y install openssl-devel-1.0.2k-19.el7.x86_64.rpm
+rpm -Uvh python-devel-2.7.5-86.el7.x86_64.rpm --nodeps --force
+rpm -Uvh openssl-devel-1.0.2k-19.el7.x86_64.rpm --nodeps --force
+
 
 ```
 
