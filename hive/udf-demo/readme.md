@@ -584,3 +584,17 @@ Error: Error while compiling statement: FAILED: SemanticException 1:35 AS clause
 ```
 
 
+# 4 Hive中序列
+```bash
+hadoop fs -put /opt/cloudera/parcels/CDH-6.2.0-1.cdh6.2.0.p0.967373/lib/hive/contrib/hive-contrib-2.1.1-cdh6.2.0.jar /app/udf-lib/
+```
+```sql
+add jar hdfs:///app/udf-lib/hive-contrib-2.1.1-cdh6.2.0.jar;
+create temporary function row_sequence as 'org.apache.hadoop.hive.contrib.udf.UDFRowSequence'; 
+
+SELECT row_number() over(order by id),id,rank,quote FROM quote LIMIT 10;
+SELECT row_sequence(),id,rank,quote FROM quote LIMIT 10;
+
+```
+
+
