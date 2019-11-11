@@ -40,7 +40,8 @@ Query: SHOW FUNCTIONS
 Fetched 3 row(s) in 0.01s
 
 -- 删除函数
-DROP FUNCTION getSerial(bigint);
+DROP FUNCTION  getserial(BIGINT);
+DROP FUNCTION  getserial(STRING);
 
 ```
 

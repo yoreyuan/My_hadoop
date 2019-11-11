@@ -14,8 +14,8 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
-        <provided.scope>compile</provided.scope>
-        <!--<provided.scope>provided</provided.scope>-->
+        <!--<provided.scope>compile</provided.scope>-->
+        <provided.scope>provided</provided.scope>
 
         <hadoop.version>3.0.0+cdh6.2.0</hadoop.version>
         <hive.version>2.1.1+cdh6.2.0</hive.version>
