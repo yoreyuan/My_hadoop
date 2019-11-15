@@ -315,7 +315,7 @@ CarbonData用于但不限于
 参数  |	结果
 ---- | ----
 查询（跨1个segment的时间段）  |	<3秒
-资料载入速度            |	每个节点45 MB/s
+数据载入速度            |	每个节点45 MB/s
 
 
 ## 3.3 Web/Internet 方案中的 OLAP/BI 查询
@@ -382,7 +382,8 @@ CarbonData用于但不限于
 [Spark 2.3.2](http://archive.apache.org/dist/spark/spark-2.3.2/)
 
 
-
+# 3 架构
+[CarbonData 文件结构](http://carbondata.iteblog.com/file-structure-of-carbondata.html)
 
 
 
