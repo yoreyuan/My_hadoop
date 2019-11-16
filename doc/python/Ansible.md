@@ -57,7 +57,6 @@ wget http://mirror.centos.org/centos/7/os/x86_64/Packages/openssl-devel-1.0.2k-1
 rpm -Uvh python-devel-2.7.5-86.el7.x86_64.rpm --nodeps --force
 rpm -Uvh openssl-devel-1.0.2k-19.el7.x86_64.rpm --nodeps --force
 
-
 ```
 
 ### 2.2.2 安装 setuptools
@@ -394,4 +393,8 @@ SELECT COUNT(*) FROM t_index_value_offline_month;
     ]
 }
 ```
+
+<br/>
+
+[Ansible Quickstart](https://blog.csdn.net/github_39577257/article/details/103009463)
 
