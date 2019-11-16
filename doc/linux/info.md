@@ -85,7 +85,7 @@ uname -a
 ```bash
 lsb_release -a
 cat /etc/os-release
-
+cat /etc/redhat-release
 
 
 ```

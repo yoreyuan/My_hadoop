@@ -71,8 +71,6 @@ Fetched 10 row(s) in 0.12s
 SELECT getSerial(quote) _id,id,rank,quote FROM quote LIMIT 10;
 
 
-SELECT 
-
 
 
 

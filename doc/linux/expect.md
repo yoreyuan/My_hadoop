@@ -145,8 +145,7 @@ password="***123654***"
 host="cdh3"
 port=22
 expect -c "
-    send_user connecting\ to\ $host...\r
-    spawn ssh -p $port $username@$host
+    send_user connecting\ to\ $hostssh.md$port $username@$host
     expect {
         *yes/no { send -- yes\r;exp_continue;}
         *password* { send -- $password\r;}

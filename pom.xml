@@ -16,6 +16,7 @@
         <module>Impala/Imapla-jdbc</module>
         <module>hadoop/parquet-demo</module>
         <module>hbase/hbase-client</module>
+        <module>clickhouse/ch-jdbc-client</module>
     </modules>
 
     <developers>
