@@ -1,9 +1,5 @@
 package yore;
 
-/**
- * Created by yore on 2019/11/19 16:39
- */
-
 import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDF;
 
@@ -53,7 +49,7 @@ public class FieldEqualUDF extends UDF {
      * @auther: yore
      * @param f1 字段1
      * @param f2 字段2
-     * @return boolean 量字段是否相等
+     * @return boolean 两字段是否相等
      */
     public Boolean evaluate(Object f1, Object f2){
         if((f1==null && f2==null) || f1 == f2) return true;
