@@ -229,18 +229,21 @@ alertServer="192.168.33.6"
 # 注意：部署api server的机器hostname列表
 apiServers="192.168.33.6"
 
-# 如果有报警的邮箱，可以配置上
+# 用到邮箱发送邮件时务必配置上邮件服务，否则执行结果发送时会提示失败
+# cn.escheduler.server.worker.runner.TaskScheduleThread:[249] - task escheduler # failure : send mail failed!
+java.lang.RuntimeException: send mail failed!
 # alert配置
-# 邮件协议
+# 邮件协议，默认是SMTP邮件协议
 mailProtocol="SMTP"
-# 邮件服务host
-mailServerHost="smtp.exmail.qq.com"
-# 邮件服务端口
-mailServerPort="25"
-# 发送人
-mailSender="xxxxxxxxxx"
+# 邮件服务host。以网易邮箱为例。QQ邮箱的服务为 smtp.qq.com
+mailServerHost="smtp.163.com"
+# 邮件服务端口。SSL协议端口 465/994，非SSL协议端口 25
+mailServerPort="465"
+# 发送人。
+# 网易邮箱在 客户端授权密码 获取，具体可以看下图
+mailSender="yuandd_yore@163.com"
 # 发送人密码
-mailPassword="xxxxxxxxxx"
+mailPassword="yore***"
 
 # 下载Excel路径
 xlsFilePath="/home/escheduler/xls"
@@ -461,6 +464,23 @@ systemctl stop nginx
 
 ## 3.2 快速上手
 可以查看我的blog [工作流任务调度系统：Apache DolphinScheduler](https://blog.csdn.net/github_39577257/article/details/102783298)
+
+
+## 3.3 同其它调度工具的对比
+Class | Item | DolphinScheduler | Azkaban
+---- | ---- | :---- | :----
+稳定性 | 单点故障   | 去中心化的多 Master 和多 Worker | 是，单个 Web 和调度程序组合节点
+&nbsp;| HA额外要求 | 不需要（本身就支持HA） | DB
+&nbsp;| 过载处理   | 任务队列机制，单个机器上可调度的任务数量可以灵活配置，当任务过多时会缓存在任务队列里，不会造成机器卡死 | 任务太多会卡死服务器
+易用性 | DAG监控界面   | 任务状态、任务类型、重试次数、任务运行机器、可视化变量等关键信息一目了然 | 只能看到任务状态
+&nbsp;| 可视化流程定义 | 是，所有流程定义操作都是可视化的，通过拖拽任务来绘制DAG，配置数据源及资源，同时对于第三方系统提供API方式的操作 | 否，通过自定义DSL绘制DAG打包上传
+&nbsp;| 快速部署      | 一键部署 | 集群化部署，复杂
+功能   | 是否能暂停和恢复 | 支持暂停、恢复操作 | 否，只能先将工作流杀死再重新运行
+&nbsp; | 是否支持多租户   | 支持。DolphinScheduler上的用户可以通过租户和Hadoop用户实现多对一或一对一的映射关系，这对于大数据作业上的调度是非常重要的 | 否
+&nbsp;| 任务类型        | 支持传统的shell任务，同时支持大数据平台任务调度MR、Spark、SQL(MySQL、PostgreSQL、Hive、SparkSQL、Impala、ClickHouse、Oracle)、Python、Procedure、Sub_Process | shell、gobblin、hadoopJava、Java、Hive、Pig、Spark、hdfsToTeradata、teradataToHdfs
+&nbsp;| 契合度          | 支持大数据作业Spark、Hive、MR的调度，同时由于支持多租户，于大数据业务更加契合 | 由于不支持多租户，在大数据平台业务使用上不够灵活
+扩展性 | 是否支持自定义任务类型 | 是 | 是
+&nbsp;| 是否支持集群扩展      | 是，调度器使用分布式调度，整体的调度能力会随着集群的规模线性增长，Master和Worker支持动态上下线 | 是，但是复杂，Executor水平扩展
 
 
 
