@@ -106,6 +106,28 @@ ls | grep ds
 #  建表相关的SQL文件在  v2.11.0rc2/tools 下
 #  tpcds_ri.sql         创建表与表之间关系的sql语句
 #  tpcds_source.sql     其中又 21 张表（本次不用这个表）
+#     s_catalog_page
+#     s_zip_to_gmt
+#     s_purchase_lineitem
+#     s_customer
+#     s_customer_address
+#     s_purchase
+#     s_catalog_order
+#     s_web_order
+#     s_item
+#     s_catalog_order_lineitem
+#     s_web_order_lineitem
+#     s_store
+#     s_call_center
+#     s_web_site
+#     s_warehouse
+#     s_web_page
+#     s_promotion
+#     s_store_returns
+#     s_catalog_returns
+#     s_web_returns
+#     s_inventory
+#     
 #  tpcds.sql            创建25张表的sql语句
 #     25 张表如下
 #     dbgen_version
