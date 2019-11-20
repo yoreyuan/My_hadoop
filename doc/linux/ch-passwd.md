@@ -1,6 +1,41 @@
 关于CentOS7的密码
 ----
 
+# 1 用户的创建与删除
+```bash
+# 1 创建用户
+adduser 用户名
+passwd 用户名
+
+# 建工作组
+groupadd 组名   
+# 新建用户同时增加工作组
+useradd -g 组名 用户名   
+
+# 2 删除用户
+userdel 用户名
+groupdel 用户名
+# 强制删除该用户的主目录和主目录下的所有文件和子目录）
+# usermod –G 组名 用户名
+
+```
+
+# 2 sudo 
+```
+# 3 赋予sudo权限。编辑系统 sudoers 文件
+# 如果没有编辑权限，以root用户登录，赋予w权限
+# chmod 640 /etc/sudoers
+vi /etc/sudoers
+
+# 大概在100行，在root下添加如下
+escheduler  ALL=(ALL)       NOPASSWD: NOPASSWD: ALL
+
+# 并且需要注释掉 Default requiretty 一行。如果有则注释，没有没有跳过
+#Default requiretty
+
+```
+
+
 # 1 修改普通用户密码
 ```bash
 # 1 root用户登录
