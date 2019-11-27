@@ -63,3 +63,48 @@ hive>  DROP TEMPORARY FUNCTION IF EXISTS field_equal;
 hive> exit;
 
 ```
+
+# Impala
+```sql
+-- 创建自定义函数
+[cdh3:21000] upsert_test> CREATE FUNCTION IF NOT EXISTS field_equal(STRING, STRING) RETURNS BOOLEAN LOCATION 'hdfs:/app/udf-lib/field-equal-udf.jar' symbol='yore.FieldEqualUDF';
++----------------------------+
+| summary                    |
++----------------------------+
+| Function has been created. |
++----------------------------+
+Fetched 1 row(s) in 0.05s
+
+[cdh3:21000] upsert_test> SELECT field_equal("hive", "hive");
+Query: SELECT field_equal("hive", "hive")
+Query submitted at: 2019-11-27 10:06:18 (Coordinator: http://cdh3.ygbx.com:25000)
+Query progress can be monitored at: http://cdh3.ygbx.com:25000/query_plan?query_id=a8444f849fc7c6d4:f8cfb52100000000
++-----------------------------------------+
+| upsert_test.field_equal('hive', 'hive') |
++-----------------------------------------+
+| true                                    |
++-----------------------------------------+
+Fetched 1 row(s) in 0.11s
+SELECT field_equal("hive", "hive");
+
+-- ARRAY, BIGINT, BINARY, BOOLEAN, CHAR, DATE, DATETIME, DECIMAL, REAL, FLOAT, INTEGER, MAP, SMALLINT, STRING, STRUCT, TIMESTAMP, TINYINT, VARCHAR
+-- int，int
+CREATE FUNCTION IF NOT EXISTS field_equal(BIGINT, BIGINT) RETURNS BOOLEAN LOCATION 'hdfs:/app/udf-lib/field-equal-udf.jar' symbol='yore.FieldEqualUDF';
+SELECT field_equal(127, 127);
+-- float,float
+CREATE FUNCTION IF NOT EXISTS field_equal(float, float) RETURNS BOOLEAN LOCATION 'hdfs:/app/udf-lib/field-equal-udf.jar' symbol='yore.FieldEqualUDF';
+SELECT field_equal(1.1, 1.1);
+-- boolean, boolean
+CREATE FUNCTION IF NOT EXISTS field_equal(BOOLEAN, BOOLEAN) RETURNS BOOLEAN LOCATION 'hdfs:/app/udf-lib/field-equal-udf.jar' symbol='yore.FieldEqualUDF';
+SELECT field_equal(true, true);
+SELECT field_equal(false, false);
+SELECT field_equal(true, false);
+
+
+SHOW FUNCTIONS;
+DROP FUNCTION  field_equal(BIGINT, BIGINT);
+DROP FUNCTION  field_equal(BOOLEAN, BOOLEAN);
+DROP FUNCTION  field_equal(FLOAT, FLOAT);
+DROP FUNCTION  field_equal(STRING, STRING);
+
+```

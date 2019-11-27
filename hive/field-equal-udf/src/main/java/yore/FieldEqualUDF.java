@@ -75,4 +75,42 @@ public class FieldEqualUDF extends UDF {
         }
     }
 
+    public Boolean evaluate(String f1, String f2){
+        if((f1==null && f2==null) || f1 == f2) return true;
+        return f1.equals(f2);
+    }
+
+    public Boolean evaluate(Integer f1, Integer f2){
+        if((f1==null && f2==null) || f1 == f2) return true;
+        return f1.equals(f2);
+    }
+
+    public Boolean evaluate(Long f1, Long f2){
+        if((f1==null && f2==null) || f1 == f2) return true;
+        return f1.equals(f2);
+    }
+
+    public Boolean evaluate(Float f1, Float f2){
+        if((f1==null && f2==null) || f1 == f2) return true;
+        return f1.equals(f2);
+    }
+
+    public Boolean evaluate(Double f1, Double f2){
+        if((f1==null && f2==null) || f1 == f2) return true;
+        return f1.equals(f2);
+    }
+
+    public Boolean evaluate(Boolean f1, Boolean f2){
+        if((f1==null && f2==null) || f1 == f2) return true;
+        return f1.equals(f2);
+    }
+
+    public Boolean evaluate(Date f1, Date f2){
+        if((f1==null && f2==null) || f1 == f2) return true;
+
+        String f1Str = sf.format((Date) f1);
+        String f2Str = sf.format((Date) f2);
+        return f1.equals(f2);
+    }
+
 }
