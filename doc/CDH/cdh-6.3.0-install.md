@@ -418,17 +418,17 @@ chmod 555 -R /var/www/html/cloudera-repos
 # 11 cloudera-manager 安装前
 三个节点都执行
 ```bash
-wget http://yr-3-58/cloudera-repos/cm6/6.3.0/redhat7/yum/cloudera-manager.repo -P /etc/yum.repos.d/
+wget http://yr-3-3/cloudera-repos/cm6/6.3.0/redhat7/yum/cloudera-manager.repo -P /etc/yum.repos.d/
 # 导入存储库签名GPG密钥：
-sudo rpm --import http://yr-3-58/cloudera-repos/cm6/6.3.0/redhat7/yum/RPM-GPG-KEY-cloudera
+sudo rpm --import http://yr-3-3/cloudera-repos/cm6/6.3.0/redhat7/yum/RPM-GPG-KEY-cloudera
 ```
 
 修改`cloudera-manager.repo`。执行命令：`vim /etc/yum.repos.d/cloudera-manager.repo`，修改为如下(注意https改为http)
 ```yaml
 [cloudera-manager]
 name=Cloudera Manager 6.3.0
-baseurl=http://yr-3-58/cloudera-repos/cm6/6.3.0/redhat7/yum/
-gpgkey=http://yr-3-58/cloudera-repos/cm6/6.3.0/redhat7/yum/RPM-GPG-KEY-cloudera
+baseurl=http://yr-3-3/cloudera-repos/cm6/6.3.0/redhat7/yum/
+gpgkey=http://yr-3-3/cloudera-repos/cm6/6.3.0/redhat7/yum/RPM-GPG-KEY-cloudera
 gpgcheck=1
 enabled=1
 autorefresh=0
@@ -474,9 +474,9 @@ sudo yum install -y cloudera-manager-agent cloudera-manager-daemons
 ```bash
 cd /opt/cloudera/parcel-repo/
 # ln -s /opt/cloudera/parcel-repo/CDH-6.3.0-1.cdh6.3.0.p0.1279813-el7.parcel /var/www/html/cloudera-repos/cdh6/6.3.0/parcels/CDH-6.3.0-1.cdh6.3.0.p0.1279813-el7.parcel
-wget http://yr-3-58/cloudera-repos/cdh6/6.3.0/parcels/CDH-6.3.0-1.cdh6.3.0.p0.1279813-el7.parcel
-wget http://yr-3-58/cloudera-repos/cdh6/6.3.0/parcels/CDH-6.3.0-1.cdh6.3.0.p0.1279813-el7.parcel.sha1
-wget http://yr-3-58/cloudera-repos/cdh6/6.3.0/parcels/manifest.json
+wget http://yr-3-3/cloudera-repos/cdh6/6.3.0/parcels/CDH-6.3.0-1.cdh6.3.0.p0.1279813-el7.parcel
+wget http://yr-3-3/cloudera-repos/cdh6/6.3.0/parcels/CDH-6.3.0-1.cdh6.3.0.p0.1279813-el7.parcel.sha1
+wget http://yr-3-3/cloudera-repos/cdh6/6.3.0/parcels/manifest.json
 
 
 
