@@ -12,17 +12,17 @@
 # 2 服务器
 IP | hostname | password
 :---- | :---- | :----
-10.135.3.58 | yr-3-58 cdh1.ygbx.com cdh1 |   A9sPdztgS3 
-10.135.3.59 | yr-3-59 cdh2.ygbx.com cdh2 |   317PHQqFEY
-10.135.3.60 | yr-3-60 cdh3.ygbx.com cdh3 |   LPF9riZDG5
+192.168.3.3 | yr-3-3 cdh1.yore.com cdh1 |   A9******S3 
+192.168.3.6 | yr-3-6 cdh2.yore.com cdh2 |   31******EY
+192.168.3.9 | yr-3-9 cdh3.yore.com cdh3 |   LP******G5
 
 因为在指定Host时，所有的Host的用户名和密码必须一样，但是这里root的密码都不一样，可以先以一个节点为主，
 然后在起一个页面，将其它节点添加的同一个集群中。
 
 * Cloudera Manager -> 主机 -> 所有主机  ->  Add Hosts 
 * 选择集群名字，Add hosts to cluster。继续
-* 主机名，依次添加，例如添加一个 cdh3.ygbx.com。继续
-* 填入自定义存储库：http://10.135.3.58/cloudera-repos/cm6/6.3.0/
+* 主机名，依次添加，例如添加一个 cdh3.yore.com。继续
+* 填入自定义存储库：http://192.168.3.3/cloudera-repos/cm6/6.3.0/
 * 填入用户名root和密码，继续
 
 
@@ -43,26 +43,26 @@ vi /etc/fstab      :  /dev/VolGroup00/lv_app   /app   xfs   defaults 0 0
 
 **注意**：hostname必须是一个FQDN（全限定域名），例如`myhost-1.example.com`，否则后面启动Agent时有个验证时无法通过的。
 ```bash
-# yr-3-58
-sudo hostnamectl set-hostname cdh1.ygbx.com
-# yr-3-59
-sudo hostnamectl set-hostname cdh2.ygbx.com
-# yr-3-60
-sudo hostnamectl set-hostname cdh3.ygbx.com
+# yr-3-3
+sudo hostnamectl set-hostname cdh1.yore.com
+# yr-3-6
+sudo hostnamectl set-hostname cdh2.yore.com
+# yr-3-9
+sudo hostnamectl set-hostname cdh3.yore.com
 
 #配置 /etc/hosts
-10.135.3.58 cdh1.ygbx.com cdh1 yr-3-58
-10.135.3.59 cdh2.ygbx.com cdh2 yr-3-59
-10.135.3.60 cdh3.ygbx.com cdh3 yr-3-60
+192.168.3.3 cdh1.yore.com cdh1 yr-3-3
+192.168.3.6 cdh2.yore.com cdh2 yr-3-6
+192.168.3.9 cdh3.yore.com cdh3 yr-3-9
 
 
 # 配置 /etc/sysconfig/network 
-# yr-3-58
-HOSTNAME=cdh1.ygbx.com
-# yr-3-59
-HOSTNAME=cdh2.ygbx.com
-# yr-3-60
-HOSTNAME=cdh3.ygbx.com
+# yr-3-3
+HOSTNAME=cdh1.yore.com
+# yr-3-6
+HOSTNAME=cdh2.yore.com
+# yr-3-9
+HOSTNAME=cdh3.yore.com
 
 
 ```
@@ -89,9 +89,9 @@ vim /etc/selinux/config
 ssh-keygen -t rsa
 
 # 授权node2、node3节点可以免密访问node1
-ssh-copy-id root@yr-3-58
-ssh-copy-id root@yr-3-59
-ssh-copy-id root@yr-3-60
+ssh-copy-id root@yr-3-3
+ssh-copy-id root@yr-3-6
+ssh-copy-id root@yr-3-9
 ```
 
 # 6 JDK
@@ -124,8 +124,8 @@ tar -zxf  scala-2.11.8.tgz -C /usr/local
 mv /usr/local/scala-2.11.8 /usr/local/scala
 
 # 这里可以用scp把/usr/local/scala发送到另外的两个节点
-scp -r /usr/local/scala/ root@yr-3-59:/usr/local/
-scp -r /usr/local/scala/ root@yr-3-60:/usr/local/
+scp -r /usr/local/scala/ root@yr-3-6:/usr/local/
+scp -r /usr/local/scala/ root@yr-3-9:/usr/local/
 
 #配置环境变量，在 /etc/profile中添加如下配置，并生效 ` source /etc/proifle `
 # set Scala environment
@@ -139,7 +139,7 @@ scala -version
 
 
 # 8 MySQL
-规划：在`10.135.3.60`节点安装
+规划：在`192.168.3.9`节点安装
 
 ## 配置环境变量
 ```bash
@@ -255,13 +255,13 @@ ps -ef|grep mysql
 ```
 ```sql
 --必须先修改密码
-mysql>  set password=password('p8zmZAPk&94BulHv');
+mysql>  set password=password('p8**&***Hv');
 
 --在mysql中添加一个远程访问的用户 
 mysql> use mysql; 
 mysql> select host,user from user; 
--- 添加一个远程访问用户scm，并设置其密码为 U@P3uXBSmAe%kQh^
-mysql> grant all privileges on *.* to 'scm'@'%' identified by 'U@P3uXBSmAe%kQh^' with grant option; 
+-- 添加一个远程访问用户scm，并设置其密码为 U@*****Qh^
+mysql> grant all privileges on *.* to 'scm'@'%' identified by 'U@*****Qh^' with grant option; 
 --刷新配置
 mysql> flush privileges;
 
@@ -270,10 +270,10 @@ mysql> flush privileges;
 # 9 NTP
 ip | 用途
 :---- | :----
-~~ntp2.sinosig.com~~ | NTP服务（10.10.2.65）
-yr-3-58 | ntpd服务，以本地时间为准
-yr-3-59 | ntpd客户端。与ntpd服务同步时间
-yr-3-60 | ntpd客户端。与ntpd服务同步时间
+~~ntp2.yore.com~~ | NTP服务
+yr-3-3 | ntpd服务，以本地时间为准
+yr-3-6 | ntpd客户端。与ntpd服务同步时间
+yr-3-9 | ntpd客户端。与ntpd服务同步时间
 
 ```bash
 # NTP服务，如果没有先安装
@@ -313,18 +313,18 @@ keys /etc/ntp/keys
 #允许任何IP的客户端进行时间同步，但不允许修改NTP服务端参数，default类似于0.0.0.0
 restrict default kod nomodify notrap nopeer noquery
 restrict -6 default kod nomodify notrap nopeer noquery
-#restrict 10.135.3.58 nomodify notrap nopeer noquery
+#restrict 192.168.3.3 nomodify notrap nopeer noquery
 #允许通过本地回环接口进行所有访问
 restrict 127.0.0.1
 restrict  -6 ::1
 # 允许内网其他机器同步时间。网关和子网掩码。/etc/sysconfig/network-scripts/ifcfg-网卡名；route -n、ip route show  
-restrict 10.135.3.254 mask 255.255.255.0 nomodify notrap
-restrict 10.135.3.0 mask 255.255.255.0 nomodify notrap
+restrict 192.168.3.254 mask 255.255.255.0 nomodify notrap
+restrict 192.168.3.0 mask 255.255.255.0 nomodify notrap
 # 允许上层时间服务器主动修改本机时间
-#server ntp2.sinosig.com minpoll 4 maxpoll 4 prefer
-server 10.10.2.65 minpoll 4 maxpoll 4 prefer
-fudge 10.10.2.65 stratum 3
-server 10.135.3.58
+#server ntp2.yore.com minpoll 4 maxpoll 4 prefer
+server xx.xx.x.xx minpoll 4 maxpoll 4 prefer
+fudge xx.xx.x.xx stratum 3
+server 192.168.3.3
 # 外部时间服务器不可用时，以本地时间作为时间服务
 server  127.127.1.0     # local clock
 fudge   127.127.1.0 stratum 10
@@ -343,7 +343,7 @@ restrict default kod nomodify notrap nopeer noquery
 restrict -6 default kod nomodify notrap nopeer noquery
 restrict 127.0.0.1
 restrict -6 ::1
-server 10.135.3.58 iburst
+server 192.168.3.3 iburst
 
 ```
 
@@ -356,11 +356,11 @@ ntpq -p
 #ntpd -q -g 
 #ss -tunlp | grep -w :123
 #手动触发同步
-ntpdate -uv ntp2.sinosig.com
-#ntpdate yr-3-58
-# ntpdate -d  yr-3-58
-# ntpdate -u  ntp2.sinosig.com
-ntpdate -u  yr-3-58
+ntpdate -uv ntp2.yore.com
+#ntpdate yr-3-3
+# ntpdate -d  yr-3-3
+# ntpdate -u  ntp2.yore.com
+ntpdate -u  yr-3-3
 # 查看同步状态。需要过一段时间，查看状态会变成synchronised
 ntpstat
 timedatectl
@@ -447,8 +447,8 @@ MySQL驱动包（**注意**一定要将MySQL驱动重名为mysql-connector-java.
 ```bash
 sudo mkdir -p /usr/share/java/
 mv mysql-connector-java-5.1.46-bin.jar /usr/share/java/mysql-connector-java.jar
-scp /usr/share/java/mysql-connector-java.jar root@yr-3-59:/usr/share/java/
-scp /usr/share/java/mysql-connector-java.jar root@yr-3-60:/usr/share/java/
+scp /usr/share/java/mysql-connector-java.jar root@yr-3-3:/usr/share/java/
+scp /usr/share/java/mysql-connector-java.jar root@yr-3-6:/usr/share/java/
 ```
 
 关于时区。/opt/cloudera/cm/bin/cm-server文件中，大概第43行添加CMF_OPTS="$CMF_OPTS -Duser.timezone=Asia/Shanghai"
@@ -492,7 +492,7 @@ chown cloudera-scm.cloudera-scm /opt/cloudera/parcel-repo/*
 vim /etc/cloudera-scm-agent/config.ini
 #配置如下项
 # Hostname of the CM server. 运行Cloudera Manager Server的主机的名称
-server_host=cdh1.ygbx.com
+server_host=cdh1.yore.com
 # Port that the CM server is listening on. 运行Cloudera Manager Server的主机上的端口
 server_port=7182
 #启用为代理使用 TLS 加密
@@ -501,7 +501,7 @@ server_port=7182
 ```
 
 # 13 设置 Cloudera Manager 数据库
-登陆`10.135.3.60`服务，然后进入MySQL创建库和表
+登陆`192.168.3.9`服务，然后进入MySQL创建库和表
 ```bash
 # 登陆 Mysql后执行如下命令
 CREATE DATABASE scm DEFAULT CHARACTER SET utf8 DEFAULT COLLATE utf8_general_ci;
@@ -520,7 +520,7 @@ CREATE DATABASE oozie DEFAULT CHARACTER SET utf8 DEFAULT COLLATE utf8_general_ci
 
 初始化数据库
 ```bash
-sudo /opt/cloudera/cm/schema/scm_prepare_database.sh -h 10.135.3.60  mysql scm scm U@P3uXBSmAe%kQh^
+sudo /opt/cloudera/cm/schema/scm_prepare_database.sh -h 192.168.3.9  mysql scm scm U@*****Qh^
 ```
 
 # 14 启动Cloudera Manager Server
@@ -537,7 +537,7 @@ sudo tail -f /var/log/cloudera-scm-server/cloudera-scm-server.log
 ```
 
 # 15 转到 Web 浏览器
-Web浏览器数据 [http://10.135.3.58:7180](http://10.135.3.58:7180)。登录Cloudera Manager Admin Console，默认凭着为
+Web浏览器数据 [http://192.168.3.3:7180](http://192.168.3.3:7180)。登录Cloudera Manager Admin Console，默认凭着为
 * **Username**: admin
 * **Password**: admin
 
@@ -575,10 +575,10 @@ echo never > /sys/kernel/mm/transparent_hugepage/enabled
 ## 数据库设置
 服务 | 主机名称 | 数据库 | 用户名 | 密码
 ---- | ---- |  ---- | ---- | ----
-Hive             | cdh3.ygbx.com | metastore | scm | U@P3uXBSmAe%kQh^
-Activity Monitor | cdh3.ygbx.com | amon      | scm | U@P3uXBSmAe%kQh^
-Oozie Server     | cdh3.ygbx.com | oozie     | scm | U@P3uXBSmAe%kQh^
-Hue              | cdh3.ygbx.com | hue       | scm | U@P3uXBSmAe%kQh^
+Hive             | cdh3.yore.com | metastore | scm | U@*****Qh^
+Activity Monitor | cdh3.yore.com | amon      | scm | U@*****Qh^
+Oozie Server     | cdh3.yore.com | oozie     | scm | U@*****Qh^
+Hue              | cdh3.yore.com | hue       | scm | U@*****Qh^
 
 ## 审核更改
 * **dfs.datanode.data.dir**： /opt/hadoop/dfs/dn
@@ -679,30 +679,3 @@ insert into table test values(1101, "hive组件", "2019-09-06 17:03:22",2.1);
 
 ```
 
-*********************************
-
-# 16 涉及到的用户
-
-
-* CDH
-    + 管理员
-        - http://10.135.3.58:7180
-	    - 用户名:  admin
-	    - 密  码： ygxb666
-	+ 普通用户（只读）
-	    - 用户名： guest
-	    - 密  码： guest
-* Hue
-	- http://10.135.3.58:8888/hue/accounts/login?next=/
-	- 用户名：hue
-	- 密  码：hue123
-* 元数据库（MySQL）
-    - user：     root
-    - password： p8zmZAPk&94BulHv
-    - user2:     scm
-    - password2: U@P3uXBSmAe%kQh^
-
-
-
-
- 
