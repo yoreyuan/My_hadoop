@@ -31,7 +31,7 @@ Codename:       Core
 4. 查看文档：[CDH 5发行说明](http://www.cloudera.com/content/cloudera/en/documentation/core/latest/topics/rg_release_notes_cdh.html)、
 [Cloudera安全公告](https://www.cloudera.com/documentation/other/security-bulletins/topics/Security-Bulletin.html)
 5. 查看升级过程并预留维护时段，并指定足够的时间来执行所有步骤。对于生产群集，Cloudera建议分配最多一整天的维护时段来执行升级，具体取决于主机数量，
-Hadoop和Linux的使用经验以及您使用的特定硬件。
+Hadoop 和 Linux 的使用经验以及您使用的特定硬件。
 6. 如果群集使用Impala，请根据[不兼容的更改中](https://www.cloudera.com/documentation/enterprise/upgrade/topics/rg_cdh_600_incompatible_changes.html#impala_incompatible_changes_c6b1)
 列出的最新保留字检查SQL 。如果要跨多个版本升级，或者遇到任何问题，请检查[Impala关键字](https://www.cloudera.com/documentation/enterprise/upgrade/topics/impala_reserved_words.html#reserved_words)的完整列表 。
 7. 运行安全检查器并修复任何报告的错误。点击 `管理 > 安全性 > 安全性检查器`
