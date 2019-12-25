@@ -469,14 +469,14 @@ Fetched 1 row(s) in 0.07s
 Fetched 4 row(s) in 0.18s
 
 -- 4 更新一条数据。将id=2的name值改为TWO
-[cdh3.ygbx.com:21000] default> INSERT OVERWRITE TABLE tmp_test
+[cdh3.yore.com:21000] default> INSERT OVERWRITE TABLE tmp_test
                              > SELECT * FROM
                              > (SELECT id,"TWO" as name FROM tmp_test WHERE id=2
                              > UNION ALL
                              > SELECT * FROM tmp_test WHERE id <> 2) T;
 Modified 4 row(s) in 0.32s
 -- 查看数据。发现id=2的值已经改为了TWO，更新数据成功。
-[cdh3.ygbx.com:21000] default> SELECT * FROM tmp_test;
+[cdh3.yore.com:21000] default> SELECT * FROM tmp_test;
 +----+-------+
 | id | name  |
 +----+-------+
@@ -489,11 +489,11 @@ Fetched 4 row(s) in 0.11s
 
 -- 5 删除数据 
 --  5.1 删除一条数据。我们删除一条id=0的数据
-[cdh3.ygbx.com:21000] default> INSERT OVERWRITE TABLE tmp_test
+[cdh3.yore.com:21000] default> INSERT OVERWRITE TABLE tmp_test
                              > SELECT * FROM tmp_test WHERE id <> 0;
 Modified 3 row(s) in 0.31s
 --  查看数据，发现id=0的数据已经不再表中了（被删除了）
-[cdh3.ygbx.com:21000] default>  SELECT * FROM tmp_test;
+[cdh3.yore.com:21000] default>  SELECT * FROM tmp_test;
 +----+-------+
 | id | name  |
 +----+-------+
@@ -504,11 +504,11 @@ Modified 3 row(s) in 0.31s
 Fetched 3 row(s) in 0.21s
 
 --  5.2 删除多条数据。我们删除 id 为 1 和 2的数据
-[cdh3.ygbx.com:21000] default> INSERT OVERWRITE TABLE tmp_test
+[cdh3.yore.com:21000] default> INSERT OVERWRITE TABLE tmp_test
                              > SELECT * from tmp_test WHERE id not in (1,2);
 Modified 1 row(s) in 0.21s
 --  查看数据，发现id=1和id=2的两条数据同时被删除，只留下id=3的数据
-[cdh3.ygbx.com:21000] default> SELECT * FROM tmp_test;
+[cdh3.yore.com:21000] default> SELECT * FROM tmp_test;
 +----+-------+
 | id | name  |
 +----+-------+

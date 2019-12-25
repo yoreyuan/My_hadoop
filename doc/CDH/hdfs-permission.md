@@ -302,7 +302,7 @@ SHOW_DATABASE |	允许用户查看可用的数据库
 -- 查询时报 user2 用户没有权限读取数据。
 --  看来 hive 的赋权并不能脱离 HDFS 的权限。hive.sentry.provider 映射的是 org.apache.sentry.provider.file.HadoopGroupResourceAuthorizationProvider
 hive> SELECT * FROM yore;
-FAILED: SemanticException Unable to determine if hdfs://cdh1.ygbx.com:8020/user/hive/warehouse/yore is encrypted: org.apache.hadoop.security.AccessControlException: Permission denied: user=user2, access=READ, inode="/user/hive/warehouse/yore":hive:hive:drwxrwx--x
+FAILED: SemanticException Unable to determine if hdfs://cdh1.yore.com:8020/user/hive/warehouse/yore is encrypted: org.apache.hadoop.security.AccessControlException: Permission denied: user=user2, access=READ, inode="/user/hive/warehouse/yore":hive:hive:drwxrwx--x
         at org.apache.hadoop.hdfs.server.namenode.FSPermissionChecker.check(FSPermissionChecker.java:400)
         at org.apache.hadoop.hdfs.server.namenode.FSPermissionChecker.checkPermission(FSPermissionChecker.java:262)
         at org.apache.sentry.hdfs.SentryINodeAttributesProvider$SentryPermissionEnforcer.checkPermission(SentryINodeAttributesProvider.java:86)

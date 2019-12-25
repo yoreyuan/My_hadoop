@@ -158,8 +158,8 @@ insert into b060_prplclaim values("3", "2019-06-21 18:00:00", "b", 0.33, "2019-0
 # 在任意一个Impala daemon 节点上执行如下命令，进入impals 命令行
 [root@cdh2 ~]# impala-shell
 Starting Impala Shell without Kerberos authentication
-Opened TCP connection to cdh2.ygbx.com:21000
-Connected to cdh2.ygbx.com:21000
+Opened TCP connection to cdh2.yore.com:21000
+Connected to cdh2.yore.com:21000
 Server version: impalad version 3.2.0-cdh6.2.0 RELEASE (build edc19942b4debdbfd485fbd26098eef435003f5d)
 ***********************************************************************************
 Welcome to the Impala shell.

@@ -50,7 +50,7 @@ DROP FUNCTION  getserial(STRING);
 
 -- SELECT row_sequence() AS _id,id,rank,quote FROM quote LIMIT 10;
 -- SELECT getSerial(),project_name,statistics_date FROM t_index_value_offline_month;
-[cdh3.ygbx.com:21000] default> SELECT getSerial(id) _id,id,rank,quote FROM quote LIMIT 10;
+[cdh3.yore.com:21000] default> SELECT getSerial(id) _id,id,rank,quote FROM quote LIMIT 10;
 +--------------------+---------+------+--------------------------------+
 | _id                | id      | rank | quote                          |
 +--------------------+---------+------+--------------------------------+

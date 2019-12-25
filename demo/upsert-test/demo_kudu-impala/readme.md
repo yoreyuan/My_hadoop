@@ -13,7 +13,7 @@ cdh3    | Impala Daemon、 Master、Tablet Server
 
 ```sql
 -- 创建测试库
-[cdh3.ygbx.com:21000] default> CREATE DATABASE IF NOT EXISTS upsert_test COMMENT 'UPSERT TEST' ;
+[cdh3.yore.com:21000] default> CREATE DATABASE IF NOT EXISTS upsert_test COMMENT 'UPSERT TEST' ;
 Query: CREATE DATABASE IF NOT EXISTS upsert_test COMMENT 'UPSERT TEST'
 +----------------------------+
 | summary                    |
@@ -85,10 +85,10 @@ hadoop fs -put row10000_col300_column.csv /user/hive/warehouse/upsert_test.db/ta
 INVALIDATE METADATA;
 
 -- 5 count
-[cdh3.ygbx.com:21000] upsert_test> SELECT COUNT(*) FROM target_m_tmp ;
+[cdh3.yore.com:21000] upsert_test> SELECT COUNT(*) FROM target_m_tmp ;
 Query: SELECT COUNT(*) FROM target_m_tmp
-Query submitted at: 2019-11-29 02:09:58 (Coordinator: http://cdh3.ygbx.com:25000)
-Query progress can be monitored at: http://cdh3.ygbx.com:25000/query_plan?query_id=e246e73a4b8488d4:72d0168200000000
+Query submitted at: 2019-11-29 02:09:58 (Coordinator: http://cdh3.yore.com:25000)
+Query progress can be monitored at: http://cdh3.yore.com:25000/query_plan?query_id=e246e73a4b8488d4:72d0168200000000
 +----------+
 | count(*) |
 +----------+
@@ -97,7 +97,7 @@ Query progress can be monitored at: http://cdh3.ygbx.com:25000/query_plan?query_
 Fetched 1 row(s) in 5.24s
 
 -- 7 创建Kudu表 并将 target_tmp 表数据导入到建的 Kudu 表中
-[cdh3.ygbx.com:21000] upsert_test> CREATE TABLE target
+[cdh3.yore.com:21000] upsert_test> CREATE TABLE target
                                  > PRIMARY KEY (id)
                                  > PARTITION BY HASH (id) PARTITIONS 3
                                  > STORED AS KUDU
@@ -115,10 +115,10 @@ AS SELECT * FROM target_tmp
 Fetched 1 row(s) in 4.45s
 
 -- 8 SELECT 。下面显示的时间都是首次查询的
-[cdh3.ygbx.com:21000] upsert_test> SELECT COUNT(*) FROM target;
+[cdh3.yore.com:21000] upsert_test> SELECT COUNT(*) FROM target;
 Query: SELECT COUNT(*) FROM target
-Query submitted at: 2019-11-29 02:15:24 (Coordinator: http://cdh3.ygbx.com:25000)
-Query progress can be monitored at: http://cdh3.ygbx.com:25000/query_plan?query_id=304cec10709e7ad7:502a8d7c00000000
+Query submitted at: 2019-11-29 02:15:24 (Coordinator: http://cdh3.yore.com:25000)
+Query progress can be monitored at: http://cdh3.yore.com:25000/query_plan?query_id=304cec10709e7ad7:502a8d7c00000000
 +----------+
 | count(*) |
 +----------+
@@ -126,10 +126,10 @@ Query progress can be monitored at: http://cdh3.ygbx.com:25000/query_plan?query_
 +----------+
 Fetched 1 row(s) in 3.53s
 
-[cdh3.ygbx.com:21000] upsert_test>  SELECT id,name,indicator1,indicator2,indicator298 FROM target LIMIT 3;
+[cdh3.yore.com:21000] upsert_test>  SELECT id,name,indicator1,indicator2,indicator298 FROM target LIMIT 3;
 Query: SELECT id,name,indicator1,indicator2,indicator298 FROM target LIMIT 3
-Query submitted at: 2019-11-27 12:17:38 (Coordinator: http://cdh3.ygbx.com:25000)
-Query progress can be monitored at: http://cdh3.ygbx.com:25000/query_plan?query_id=e54c77dbd4590cf9:e236e67100000000
+Query submitted at: 2019-11-27 12:17:38 (Coordinator: http://cdh3.yore.com:25000)
+Query progress can be monitored at: http://cdh3.yore.com:25000/query_plan?query_id=e54c77dbd4590cf9:e236e67100000000
 +--------------------+--------+-------------------+------------+--------------+
 | id                 | name   | indicator1        | indicator2 | indicator298 |
 +--------------------+--------+-------------------+------------+--------------+
@@ -139,10 +139,10 @@ Query progress can be monitored at: http://cdh3.ygbx.com:25000/query_plan?query_
 +--------------------+--------+-------------------+------------+--------------+
 Fetched 3 row(s) in 0.12s
 
-[cdh3.ygbx.com:21000] upsert_test> SELECT SUM(indicator1) AS sum_indi1,SUM(indicator298) AS sum_indi298 FROM target ;
+[cdh3.yore.com:21000] upsert_test> SELECT SUM(indicator1) AS sum_indi1,SUM(indicator298) AS sum_indi298 FROM target ;
 Query: SELECT SUM(indicator1) AS sum_indi1,SUM(indicator298) AS sum_indi298 FROM target
-Query submitted at: 2019-11-27 12:20:09 (Coordinator: http://cdh3.ygbx.com:25000)
-Query progress can be monitored at: http://cdh3.ygbx.com:25000/query_plan?query_id=664138bd88c2d8ba:e99e2cef00000000
+Query submitted at: 2019-11-27 12:20:09 (Coordinator: http://cdh3.yore.com:25000)
+Query progress can be monitored at: http://cdh3.yore.com:25000/query_plan?query_id=664138bd88c2d8ba:e99e2cef00000000
 +-------------------+-------------------+
 | sum_indi1         | sum_indi298       |
 +-------------------+-------------------+
@@ -165,7 +165,7 @@ indicator1 DOUBLE
 STORED AS TEXTFILE;
 
 --  1.2 查看建表语句。因为建表时没有指定数据文件的位置，Impala使用默认的位置，所以我们需要将数据文件上传到这个 LOACATION 指定的目录下。
-[cdh3.ygbx.com:21000] upsert_test> show create table target_tmp;
+[cdh3.yore.com:21000] upsert_test> show create table target_tmp;
 Query: show create table target_tmp
 +------------------------------------------------------------------------------------+
 | result                                                                             |
@@ -178,7 +178,7 @@ Query: show create table target_tmp
 | ROW FORMAT DELIMITED FIELDS TERMINATED BY ','                                      |
 | WITH SERDEPROPERTIES ('field.delim'=',', 'serialization.format'=',')               |
 | STORED AS TEXTFILE                                                                 |
-| LOCATION 'hdfs://cdh1.ygbx.com:8020/user/hive/warehouse/upsert_test.db/target_tmp' |
+| LOCATION 'hdfs://cdh1.yore.com:8020/user/hive/warehouse/upsert_test.db/target_tmp' |
 |                                                                                    |
 +------------------------------------------------------------------------------------+
 Fetched 1 row(s) in 0.01s
@@ -241,10 +241,10 @@ ALTER TABLE upsert_test.target ADD COLUMNS(indicator3 DOUBLE);
 根据主键进行更新插入
 ```sql
 -- 1 查看指标表（6kw）
-[cdh3.ygbx.com:21000] upsert_test> SELECT * FROM target ORDER BY id DESC LIMIT 10;
+[cdh3.yore.com:21000] upsert_test> SELECT * FROM target ORDER BY id DESC LIMIT 10;
 Query: SELECT * FROM target ORDER BY id DESC LIMIT 10
-Query submitted at: 2019-11-28 09:25:36 (Coordinator: http://cdh3.ygbx.com:25000)
-Query progress can be monitored at: http://cdh3.ygbx.com:25000/query_plan?query_id=674fb528ec575c87:d2bd30600000000
+Query submitted at: 2019-11-28 09:25:36 (Coordinator: http://cdh3.yore.com:25000)
+Query progress can be monitored at: http://cdh3.yore.com:25000/query_plan?query_id=674fb528ec575c87:d2bd30600000000
 +--------------------+--------+-------------------+------------+------------+
 | id                 | name   | indicator1        | indicator2 | indicator3 |
 +--------------------+--------+-------------------+------------+------------+
@@ -262,16 +262,16 @@ Query progress can be monitored at: http://cdh3.ygbx.com:25000/query_plan?query_
 Fetched 10 row(s) in 13.58s
 
 -- 2 使用 UPDATE 根据主键更新单条数据数据。(6kw)
-[cdh3.ygbx.com:21000] upsert_test> UPDATE target SET indicator1=3.25 WHERE id=119620533737230408;
+[cdh3.yore.com:21000] upsert_test> UPDATE target SET indicator1=3.25 WHERE id=119620533737230408;
 Query: UPDATE target SET indicator1=3.25 WHERE id=119620533737230408
-Query submitted at: 2019-11-28 09:30:55 (Coordinator: http://cdh3.ygbx.com:25000)
-Query progress can be monitored at: http://cdh3.ygbx.com:25000/query_plan?query_id=f647f3b7bd278c0e:84e42ce00000000
+Query submitted at: 2019-11-28 09:30:55 (Coordinator: http://cdh3.yore.com:25000)
+Query progress can be monitored at: http://cdh3.yore.com:25000/query_plan?query_id=f647f3b7bd278c0e:84e42ce00000000
 Modified 1 row(s), 0 row error(s) in 0.12s
 -- 2.1 查看更新的结果
-[cdh3.ygbx.com:21000] upsert_test> SELECT * FROM target WHERE id=119620533737230408;
+[cdh3.yore.com:21000] upsert_test> SELECT * FROM target WHERE id=119620533737230408;
 Query: SELECT * FROM target WHERE id=119620533737230408
-Query submitted at: 2019-11-28 09:30:58 (Coordinator: http://cdh3.ygbx.com:25000)
-Query progress can be monitored at: http://cdh3.ygbx.com:25000/query_plan?query_id=12417fa85a94eab6:64692f9700000000
+Query submitted at: 2019-11-28 09:30:58 (Coordinator: http://cdh3.yore.com:25000)
+Query progress can be monitored at: http://cdh3.yore.com:25000/query_plan?query_id=12417fa85a94eab6:64692f9700000000
 +--------------------+--------+------------+------------+------------+
 | id                 | name   | indicator1 | indicator2 | indicator3 |
 +--------------------+--------+------------+------------+------------+
@@ -279,26 +279,26 @@ Query progress can be monitored at: http://cdh3.ygbx.com:25000/query_plan?query_
 +--------------------+--------+------------+------------+------------+
 Fetched 1 row(s) in 0.11s
 -- 2.2 使用 UPDATE 更新数据 (6kw join 600w)
-[cdh3.ygbx.com:21000] upsert_test> UPDATE t0 SET t0.indicator3=t2.indicator3
+[cdh3.yore.com:21000] upsert_test> UPDATE t0 SET t0.indicator3=t2.indicator3
                                  > FROM target t0 LEFT JOIN target_p2 t2
                                  > ON t0.id=t2.id;
 Query: UPDATE t0 SET t0.indicator3=t2.indicator3
 FROM target t0 LEFT JOIN target_p2 t2
 ON t0.id=t2.id
-Query submitted at: 2019-11-26 19:14:55 (Coordinator: http://cdh3.ygbx.com:25000)
-Query progress can be monitored at: http://cdh3.ygbx.com:25000/query_plan?query_id=c74701e6305f3dd4:a95c634400000000
-ERROR: Kudu error(s) reported, first error: Timed out: Failed to write batch of 551882 ops to tablet be27ee716f044106b23b9da1508d5e68 after 1 attempt(s): Failed to write to server: 3628f47403ba4d8ba00df8d70499db01 (cdh2.ygbx.com:7050): Write RPC to 192.168.100.166:7050 timed out after 179.996s (SENT)
-Error in Kudu table 'impala::upsert_test.target': Timed out: Failed to write batch of 551882 ops to tablet 9561854fb6ee419aabd712d392039324 after 1 attempt(s): Failed to write to server: 697b3569654b4e86ae94397f1604bf1d (cdh3.ygbx.com:7050): Write RPC to 192.168.100.165:7050 timed out after 179.996s (SENT) (1 of 1043702 similar)
+Query submitted at: 2019-11-26 19:14:55 (Coordinator: http://cdh3.yore.com:25000)
+Query progress can be monitored at: http://cdh3.yore.com:25000/query_plan?query_id=c74701e6305f3dd4:a95c634400000000
+ERROR: Kudu error(s) reported, first error: Timed out: Failed to write batch of 551882 ops to tablet be27ee716f044106b23b9da1508d5e68 after 1 attempt(s): Failed to write to server: 3628f47403ba4d8ba00df8d70499db01 (cdh2.yore.com:7050): Write RPC to 192.168.100.166:7050 timed out after 179.996s (SENT)
+Error in Kudu table 'impala::upsert_test.target': Timed out: Failed to write batch of 551882 ops to tablet 9561854fb6ee419aabd712d392039324 after 1 attempt(s): Failed to write to server: 697b3569654b4e86ae94397f1604bf1d (cdh3.yore.com:7050): Write RPC to 192.168.100.165:7050 timed out after 179.996s (SENT) (1 of 1043702 similar)
 --  2.3 恢复数据为null
 UPDATE target SET indicator3=NULL;
 
 
 -- 3 使用 UPSERT 更新数据 (3kw)
 --  3.1 查看 target 表指标合计
-[cdh3.ygbx.com:21000] upsert_test> SELECT SUM(indicator2) FROM target;
+[cdh3.yore.com:21000] upsert_test> SELECT SUM(indicator2) FROM target;
 Query: SELECT SUM(indicator2) FROM target
-Query submitted at: 2019-11-29 10:07:46 (Coordinator: http://cdh3.ygbx.com:25000)
-Query progress can be monitored at: http://cdh3.ygbx.com:25000/query_plan?query_id=1e459b75b71d8130:35af938600000000
+Query submitted at: 2019-11-29 10:07:46 (Coordinator: http://cdh3.yore.com:25000)
+Query progress can be monitored at: http://cdh3.yore.com:25000/query_plan?query_id=1e459b75b71d8130:35af938600000000
 +-----------------+
 | sum(indicator2) |
 +-----------------+
@@ -306,10 +306,10 @@ Query progress can be monitored at: http://cdh3.ygbx.com:25000/query_plan?query_
 +-----------------+
 Fetched 1 row(s) in 1.13s
 --  3.2 查看 target_p1 表指标合计
-[cdh3.ygbx.com:21000] upsert_test> SELECT SUM(indicator2) FROM target_p1;
+[cdh3.yore.com:21000] upsert_test> SELECT SUM(indicator2) FROM target_p1;
 Query: SELECT SUM(indicator2) FROM target_p1
-Query submitted at: 2019-11-29 10:08:23 (Coordinator: http://cdh3.ygbx.com:25000)
-Query progress can be monitored at: http://cdh3.ygbx.com:25000/query_plan?query_id=5240e394398b5e04:9655b04e00000000
+Query submitted at: 2019-11-29 10:08:23 (Coordinator: http://cdh3.yore.com:25000)
+Query progress can be monitored at: http://cdh3.yore.com:25000/query_plan?query_id=5240e394398b5e04:9655b04e00000000
 +-------------------+
 | sum(indicator2)   |
 +-------------------+
@@ -317,12 +317,12 @@ Query progress can be monitored at: http://cdh3.ygbx.com:25000/query_plan?query_
 +-------------------+
 Fetched 1 row(s) in 1.93s
 --  3.3 UPSERT 方式将 target_p1 指标更新到 target 表
-[cdh3.ygbx.com:21000] upsert_test> UPSERT INTO target(id,indicator2) SELECT id,indicator2 FROM target_p1;
+[cdh3.yore.com:21000] upsert_test> UPSERT INTO target(id,indicator2) SELECT id,indicator2 FROM target_p1;
 Query: UPSERT INTO target(id,indicator2) SELECT id,indicator2 FROM target_p1
-Query submitted at: 2019-11-28 15:11:24 (Coordinator: http://cdh3.ygbx.com:25000)
-Query progress can be monitored at: http://cdh3.ygbx.com:25000/query_plan?query_id=384ab4c50d20ba1f:cec2c79d00000000
-ERROR: Kudu error(s) reported, first error: Timed out: Failed to write batch of 551882 ops to tablet be27ee716f044106b23b9da1508d5e68 after 1 attempt(s): Failed to write to server: 3628f47403ba4d8ba00df8d70499db01 (cdh2.ygbx.com:7050): Write RPC to 192.168.100.166:7050 timed out after 179.996s (SENT)
-Error in Kudu table 'impala::upsert_test.target': Timed out: Failed to write batch of 551882 ops to tablet 0b15dde7ceb545da81904006bdad914d after 1 attempt(s): Failed to write to server: 3628f47403ba4d8ba00df8d70499db01 (cdh2.ygbx.com:7050): Write RPC to 192.168.100.166:7050 timed out after 179.996s (SENT) (1 of 1135678 similar)
+Query submitted at: 2019-11-28 15:11:24 (Coordinator: http://cdh3.yore.com:25000)
+Query progress can be monitored at: http://cdh3.yore.com:25000/query_plan?query_id=384ab4c50d20ba1f:cec2c79d00000000
+ERROR: Kudu error(s) reported, first error: Timed out: Failed to write batch of 551882 ops to tablet be27ee716f044106b23b9da1508d5e68 after 1 attempt(s): Failed to write to server: 3628f47403ba4d8ba00df8d70499db01 (cdh2.yore.com:7050): Write RPC to 192.168.100.166:7050 timed out after 179.996s (SENT)
+Error in Kudu table 'impala::upsert_test.target': Timed out: Failed to write batch of 551882 ops to tablet 0b15dde7ceb545da81904006bdad914d after 1 attempt(s): Failed to write to server: 3628f47403ba4d8ba00df8d70499db01 (cdh2.yore.com:7050): Write RPC to 192.168.100.166:7050 timed out after 179.996s (SENT) (1 of 1135678 similar)
 --  由于环境问题，本次限制下数据数
 UPSERT INTO target(id,indicator2) SELECT id,indicator2 FROM target_p1 LIMIT 1;
 

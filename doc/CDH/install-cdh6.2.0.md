@@ -567,9 +567,9 @@ Cloudera Express 和 Cloudera Enterprise 中的[可用功能的完整列表](htt
 * **Cluster Basics**：给集群设置一个名字。
 * **Specify Hosts**：输入集群的主机名，多个换行添加，例如：
     ```
-    cdh1.ygbx.com
-    cdh2.ygbx.com
-    cdh3.ygbx.com
+    cdh1.yore.com
+    cdh2.yore.com
+    cdh3.yore.com
     ```
 * **选择存储库**：可以设置自定义存储库（即安装的`http://cdh6/cloudera-repos/cm6/6.2.0`），等。
 * **JDK 安装选项**：如果环境已经安装了，则不用勾选，直接继续。

@@ -1555,7 +1555,7 @@ LIMIT 1000;
 ## 8.5 和单节点查询对比
 ```sql
 -- Q0
-cdh3.ygbx.com :) SELECT avg(c1) FROM (
+cdh3.yore.com :) SELECT avg(c1) FROM (
 :-]     SELECT Year, Month, count(*) AS c1
 :-]     FROM ontime
 :-]     GROUP BY Year, Month
@@ -1758,7 +1758,7 @@ ORDER BY c3 DESC
 ↘ Progress: 0.00 rows, 0.00 B (0.00 rows/s., 0.00 B/s.) ↓ Progress: 14.91 million rows, 66.96 MB (161.78 million rows/s., 726.53 MB/s.)  98%
 20 rows in set. Elapsed: 0.092 sec. Processed 14.91 million rows, 66.96 MB (161.70 million rows/s., 726.15 MB/s.)
 -- 另一个查询版本
-cdh3.ygbx.com :) SELECT Carrier, avg(DepDelay>10)*100 AS c3
+cdh3.yore.com :) SELECT Carrier, avg(DepDelay>10)*100 AS c3
 :-] FROM ontime
 :-] WHERE Year=2007
 :-] GROUP BY Carrier
@@ -1796,7 +1796,7 @@ ORDER BY Carrier ASC
 20 rows in set. Elapsed: 0.045 sec. Processed 7.46 million rows, 59.64 MB (165.69 million rows/s., 1.33 GB/s.)
 
 --Q6. 同上一个查询一致,只是查询范围扩大到2000年到2008年
-cdh3.ygbx.com :) SELECT Carrier, c, c2, c*100/c2 as c3 FROM (
+cdh3.yore.com :) SELECT Carrier, c, c2, c*100/c2 as c3 FROM (
 :-]     SELECT Carrier, count(*) AS c
 :-]     FROM ontime
 :-]     WHERE DepDelay>10
@@ -2099,7 +2099,7 @@ GROUP BY Year
 32 rows in set. Elapsed: 0.569 sec. Processed 184.69 million rows, 369.39 MB (324.37 million rows/s., 648.74 MB/s.)
 
 -- Q10.
-cdh3.ygbx.com :) SELECT min(Year), max(Year), Carrier, count(*) AS cnt,
+cdh3.yore.com :) SELECT min(Year), max(Year), Carrier, count(*) AS cnt,
 :-]    sum(ArrDelayMinutes>30) AS flights_delayed,
 :-]    round(sum(ArrDelayMinutes>30)/count(*),2) AS rate
 :-] FROM ontime

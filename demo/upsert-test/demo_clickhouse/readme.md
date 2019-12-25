@@ -51,7 +51,7 @@ ALTER TABLE upsert_test.target_m ADD COLUMN indicatori Float64 COMMENT '指标i'
 
 在实测时，字段数到到`10000`时依然没有报错，共花费 1661718ms 。可以使用DBeaver工具查看。
 ```sql
-cdh3.ygbx.com :) desc target_m;
+cdh3.yore.com :) desc target_m;
 DESCRIBE TABLE target_m
 ↙ Progress: 0.00 rows, 0.00 B (0.00 rows/s., 0.00 B/s.) 
 ┌─name─────────┬─type────────────┬─default_type─┬─default_expression─┬─comment──┬─codec_expression─┬─ttl_expression─┐
@@ -83,7 +83,7 @@ echo `date` >> input.log
 
 ## 3.2 查询
 ```sql
-cdh3.ygbx.com :) SELECT COUNT(*) FROM target_m;
+cdh3.yore.com :) SELECT COUNT(*) FROM target_m;
 SELECT count(*)
 FROM target_m
 → Progress: 0.00 rows, 0.00 B (0.00 rows/s., 0.00 B/s.) 
@@ -94,7 +94,7 @@ FROM target_m
 1 rows in set. Elapsed: 0.105 sec. Processed 10.00 thousand rows, 80.00 KB (95.38 thousand rows/s., 763.03 KB/s.)
 
 
-cdh3.ygbx.com :) SELECT id,name,indicator1,indicator2,indicator9998 FROM target_m LIMIT 3;
+cdh3.yore.com :) SELECT id,name,indicator1,indicator2,indicator9998 FROM target_m LIMIT 3;
 SELECT
     id,
     name,
@@ -112,7 +112,7 @@ LIMIT 3
 ↗ Progress: 0.00 rows, 0.00 B (0.00 rows/s., 0.00 B/s.) → Progress: 3.00 rows, 296.00 B (59.39 rows/s., 5.86 KB/s.)  0%
 3 rows in set. Elapsed: 0.051 sec.
 
-cdh3.ygbx.com :) SELECT SUM(indicator1) AS sum_indi1,SUM(indicator9998) AS sum_indi9998 FROM target_m ;
+cdh3.yore.com :) SELECT SUM(indicator1) AS sum_indi1,SUM(indicator9998) AS sum_indi9998 FROM target_m ;
 SELECT
     SUM(indicator1) AS sum_indi1,
     SUM(indicator9998) AS sum_indi9998
@@ -132,7 +132,7 @@ clickhouse-client -h 127.0.0.1 --port 19000 -u default --password KavrqeN1  --mu
 
 ```sql
 -- 1 选择 upsert_test 库
-cdh3.ygbx.com :) use upsert_test;
+cdh3.yore.com :) use upsert_test;
 USE upsert_test
 Ok.
 0 rows in set. Elapsed: 0.001 sec.
@@ -150,7 +150,7 @@ CREATE TABLE target(
 --   echo `date` >> input.log
 --   date
 --  2.3 查看导入的数据总数
-cdh3.ygbx.com :) SELECT COUNT(*) FROM target;
+cdh3.yore.com :) SELECT COUNT(*) FROM target;
 SELECT COUNT(*)
 FROM target
 ↘ Progress: 0.00 rows, 0.00 B (0.00 rows/s., 0.00 B/s.) ↓ Progress: 45.38 million rows, 363.07 MB (422.77 million rows/s., 3.38 GB/s.)  74%┌──COUNT()─┐
@@ -172,14 +172,14 @@ CREATE TABLE target_local(
 CREATE TABLE target_all AS target_local
 ENGINE = Distributed(perftest_3shards_1replicas, upsert_test, target_local, rand());
 --  2.7 将数据加载到分布式表中
-cdh3.ygbx.com :) INSERT INTO target_all SELECT * FROM target;
+cdh3.yore.com :) INSERT INTO target_all SELECT * FROM target;
 INSERT INTO target_all SELECT *
 FROM target
 ↖ Progress: 1.16 million rows, 95.39 MB (11.22 million rows/s., 919.77 MB/s.)  1%↑ Progress: 1.18 million rows, 96.73 MB (5.79 million rows/s., 474.45 MB/s.)  1%↗ Progress: 1.20 million rows, 98.08 MB (2.95 million rows/s., 242.27 MB/s.%Ok.
 0 rows in set. Elapsed: 19.093 sec. Processed 60.00 million rows, 4.92 GB (3.14 million rows/s., 257.69 MB/s.)
 --  2.8 查看分布式表。从下面可以看到 target_all 分布式表的数据为 6kw，其它3个节点的分片表的数据总数之和也是 6kw = 19997471 + 20000491 + 20002038
 --   2.8.1 target_all
-cdh3.ygbx.com :) SELECT COUNT(*) FROM target_all;
+cdh3.yore.com :) SELECT COUNT(*) FROM target_all;
 SELECT COUNT(*)
 FROM target_all
 ↖ Progress: 0.00 rows, 0.00 B (0.00 rows/s., 0.00 B/s.) ┌──COUNT()─┐
@@ -188,7 +188,7 @@ FROM target_all
 ↑ Progress: 0.00 rows, 0.00 B (0.00 rows/s., 0.00 B/s.) ↗ Progress: 60.00 million rows, 120.00 MB (2.28 billion rows/s., 4.57 GB/s.)  98%
 1 rows in set. Elapsed: 0.026 sec. Processed 60.00 million rows, 120.00 MB (2.27 billion rows/s., 4.54 GB/s.)
 --   2.8.2 节点1 的 target_local
-cdh1.ygbx.com :) SELECT COUNT(*) FROM target_local;
+cdh1.yore.com :) SELECT COUNT(*) FROM target_local;
 SELECT COUNT(*)
 FROM target_local
 ↑ Progress: 0.00 rows, 0.00 B (0.00 rows/s., 0.00 B/s.) ┌──COUNT()─┐
@@ -197,7 +197,7 @@ FROM target_local
 ↗ Progress: 0.00 rows, 0.00 B (0.00 rows/s., 0.00 B/s.) → Progress: 20.00 million rows, 39.99 MB (1.86 billion rows/s., 3.72 GB/s.)  98%
 1 rows in set. Elapsed: 0.011 sec. Processed 20.00 million rows, 39.99 MB (1.85 billion rows/s., 3.69 GB/s.)
 --   2.8.3 节点2 的 target_local
-cdh2.ygbx.com :) SELECT COUNT(*) FROM target_local;
+cdh2.yore.com :) SELECT COUNT(*) FROM target_local;
 SELECT COUNT(*)
 FROM target_local
 → Progress: 0.00 rows, 0.00 B (0.00 rows/s., 0.00 B/s.) ┌──COUNT()─┐
@@ -206,7 +206,7 @@ FROM target_local
 ↘ Progress: 0.00 rows, 0.00 B (0.00 rows/s., 0.00 B/s.) ↓ Progress: 20.00 million rows, 40.00 MB (1.79 billion rows/s., 3.57 GB/s.)  98%
 1 rows in set. Elapsed: 0.011 sec. Processed 20.00 million rows, 40.00 MB (1.78 billion rows/s., 3.55 GB/s.)
 --   2.8.4 节点3 的 target_local
-cdh3.ygbx.com :) SELECT COUNT(*) FROM target_local;
+cdh3.yore.com :) SELECT COUNT(*) FROM target_local;
 SELECT COUNT(*)
 FROM target_local
 → Progress: 0.00 rows, 0.00 B (0.00 rows/s., 0.00 B/s.) ┌──COUNT()─┐
@@ -228,7 +228,7 @@ CREATE TABLE target_p1(
 --   echo `date` >> input.log
 --   date
 --  3.3 查看导入的数据总数
-cdh3.ygbx.com :) SELECT COUNT(*) FROM target_p1;
+cdh3.yore.com :) SELECT COUNT(*) FROM target_p1;
 SELECT COUNT(*)
 FROM target_p1
 ↑ Progress: 0.00 rows, 0.00 B (0.00 rows/s., 0.00 B/s.) ┌──COUNT()─┐
@@ -249,14 +249,14 @@ CREATE TABLE target_p1_local(
 CREATE TABLE target_p1_all AS target_p1_local
 ENGINE = Distributed(perftest_3shards_1replicas, upsert_test, target_p1_local, rand());
 --  2.7 将数据加载到分布式表中
-cdh3.ygbx.com :) INSERT INTO target_p1_all SELECT * FROM target_p1;
+cdh3.yore.com :) INSERT INTO target_p1_all SELECT * FROM target_p1;
 INSERT INTO target_p1_all SELECT *
 FROM target_p1
 ← Progress: 1.87 million rows, 33.62 MB (18.30 million rows/s., 329.35 MB/s.)  6%↖ Progress: 2.95 million rows, 53.08 MB (14.58 million rows/s., 262.52 MB/s.)  9%↑ Progress: 4.03 million rows, 72.55 MB (10.01 million rows/s., 180.26 MB/%Ok.
 0 rows in set. Elapsed: 3.786 sec. Processed 30.00 million rows, 540.00 MB (7.92 million rows/s., 142.63 MB/s.)
 --  3.8 查看分布式表。从下面可以看到 target_p1_all 分布式表的数据为 6kw，其它3个节点的分片表的数据总数之和也是 3kw = 9999160 + 10001359 + 9999481
 --   3.8.1 target_p1_all
-cdh3.ygbx.com :) SELECT COUNT(*) FROM target_p1_all;
+cdh3.yore.com :) SELECT COUNT(*) FROM target_p1_all;
 SELECT COUNT(*)
 FROM target_p1_all
 ↘ Progress: 0.00 rows, 0.00 B (0.00 rows/s., 0.00 B/s.) ┌──COUNT()─┐
@@ -265,7 +265,7 @@ FROM target_p1_all
 ↓ Progress: 0.00 rows, 0.00 B (0.00 rows/s., 0.00 B/s.) ↙ Progress: 30.00 million rows, 60.00 MB (2.77 billion rows/s., 5.54 GB/s.)  98%
 1 rows in set. Elapsed: 0.011 sec. Processed 30.00 million rows, 60.00 MB (2.73 billion rows/s., 5.45 GB/s.)
 --   3.8.2 节点1 的 target_p1_local
-cdh1.ygbx.com :) SELECT COUNT(*) FROM target_p1_local;
+cdh1.yore.com :) SELECT COUNT(*) FROM target_p1_local;
 SELECT COUNT(*)
 FROM target_p1_local
 ← Progress: 0.00 rows, 0.00 B (0.00 rows/s., 0.00 B/s.) ┌─COUNT()─┐
@@ -274,7 +274,7 @@ FROM target_p1_local
 ↖ Progress: 0.00 rows, 0.00 B (0.00 rows/s., 0.00 B/s.) ↑ Progress: 10.00 million rows, 20.00 MB (1.82 billion rows/s., 3.65 GB/s.)  98%
 1 rows in set. Elapsed: 0.006 sec. Processed 10.00 million rows, 20.00 MB (1.76 billion rows/s., 3.51 GB/s.)
 --   3.8.3 节点2 的 target_p1_local
-cdh2.ygbx.com :) SELECT COUNT(*) FROM target_p1_local;
+cdh2.yore.com :) SELECT COUNT(*) FROM target_p1_local;
 SELECT COUNT(*)
 FROM target_p1_local
 ↙ Progress: 0.00 rows, 0.00 B (0.00 rows/s., 0.00 B/s.) ┌──COUNT()─┐
@@ -283,7 +283,7 @@ FROM target_p1_local
 ← Progress: 0.00 rows, 0.00 B (0.00 rows/s., 0.00 B/s.) ↖ Progress: 10.00 million rows, 20.00 MB (2.37 billion rows/s., 4.73 GB/s.)  98%
 1 rows in set. Elapsed: 0.004 sec. Processed 10.00 million rows, 20.00 MB (2.26 billion rows/s., 4.52 GB/s.)
 --   3.8.4 节点3 的 target_p1_local
-cdh3.ygbx.com :) SELECT COUNT(*) FROM target_p1_local;
+cdh3.yore.com :) SELECT COUNT(*) FROM target_p1_local;
 SELECT COUNT(*)
 FROM target_p1_local
 ← Progress: 0.00 rows, 0.00 B (0.00 rows/s., 0.00 B/s.) ┌─COUNT()─┐
@@ -305,7 +305,7 @@ CREATE TABLE target_p2(
 --   echo `date` >> input.log
 --   date
 --  4.3 查看导入的数据总数
-cdh3.ygbx.com :) SELECT COUNT(*) FROM target_p2;
+cdh3.yore.com :) SELECT COUNT(*) FROM target_p2;
 SELECT COUNT(*)
 FROM target_p2
 ↓ Progress: 0.00 rows, 0.00 B (0.00 rows/s., 0.00 B/s.) ┌─COUNT()─┐
@@ -326,14 +326,14 @@ CREATE TABLE target_p2_local(
 CREATE TABLE target_p2_all AS target_p2_local
 ENGINE = Distributed(perftest_3shards_1replicas, upsert_test, target_p2_local, rand());
 --  4.7 将数据加载到分布式表中
-cdh3.ygbx.com :) INSERT INTO target_p2_all SELECT * FROM target_p2;
+cdh3.yore.com :) INSERT INTO target_p2_all SELECT * FROM target_p2;
 INSERT INTO target_p2_all SELECT *
 FROM target_p2
 ↖ Progress: 1.87 million rows, 33.62 MB (18.12 million rows/s., 326.15 MB/s.)  30%↑ Progress: 2.95 million rows, 53.08 MB (14.51 million rows/s., 261.24 MB/s.)  48%↗ Progress: 4.03 million rows, 72.55 MB (9.99 million rows/s., 179.79 MB%Ok.
 0 rows in set. Elapsed: 0.792 sec. Processed 6.00 million rows, 108.00 MB (7.58 million rows/s., 136.36 MB/s.)
 --  4.8 查看分布式表。从下面可以看到 target_p2_all 分布式表的数据为 600w，其它3个节点的分片表的数据总数之和也是 600w = 1999113 + 2001065 + 1999822
 --   4.8.1 target_p2_all
-cdh3.ygbx.com :) SELECT COUNT(*) FROM target_p2_all;
+cdh3.yore.com :) SELECT COUNT(*) FROM target_p2_all;
 SELECT COUNT(*)
 FROM target_p2_all
 ↙ Progress: 0.00 rows, 0.00 B (0.00 rows/s., 0.00 B/s.) ┌─COUNT()─┐
@@ -342,7 +342,7 @@ FROM target_p2_all
 ← Progress: 0.00 rows, 0.00 B (0.00 rows/s., 0.00 B/s.) ↖ Progress: 6.00 million rows, 12.00 MB (694.42 million rows/s., 1.39 GB/s.)  98%
 1 rows in set. Elapsed: 0.009 sec. Processed 6.00 million rows, 12.00 MB (678.89 million rows/s., 1.36 GB/s.)
 --   4.8.2 节点1 的 target_p2_local
-cdh1.ygbx.com :) SELECT COUNT(*) FROM target_p2_local;
+cdh1.yore.com :) SELECT COUNT(*) FROM target_p2_local;
 SELECT COUNT(*)
 FROM target_p2_local
 ↗ Progress: 0.00 rows, 0.00 B (0.00 rows/s., 0.00 B/s.) ┌─COUNT()─┐
@@ -351,7 +351,7 @@ FROM target_p2_local
 → Progress: 0.00 rows, 0.00 B (0.00 rows/s., 0.00 B/s.) ↘ Progress: 2.00 million rows, 4.00 MB (525.60 million rows/s., 1.05 GB/s.)  98%
 1 rows in set. Elapsed: 0.004 sec. Processed 2.00 million rows, 4.00 MB (478.99 million rows/s., 957.97 MB/s.)
 --   4.8.3 节点2 的 target_p2_local
-cdh2.ygbx.com :) SELECT COUNT(*) FROM target_p2_local;
+cdh2.yore.com :) SELECT COUNT(*) FROM target_p2_local;
 SELECT COUNT(*)
 FROM target_p2_local
 ↑ Progress: 0.00 rows, 0.00 B (0.00 rows/s., 0.00 B/s.) ┌─COUNT()─┐
@@ -360,7 +360,7 @@ FROM target_p2_local
 ↗ Progress: 0.00 rows, 0.00 B (0.00 rows/s., 0.00 B/s.) → Progress: 2.00 million rows, 4.00 MB (549.51 million rows/s., 1.10 GB/s.)  98%
 1 rows in set. Elapsed: 0.004 sec. Processed 2.00 million rows, 4.00 MB (527.96 million rows/s., 1.06 GB/s.)
 --   4.8.4 节点3 的 target_p2_local
-cdh3.ygbx.com :) SELECT COUNT(*) FROM target_p2_local;
+cdh3.yore.com :) SELECT COUNT(*) FROM target_p2_local;
 SELECT COUNT(*)
 FROM target_p2_local
 ↑ Progress: 0.00 rows, 0.00 B (0.00 rows/s., 0.00 B/s.) ┌─COUNT()─┐
@@ -374,7 +374,7 @@ FROM target_p2_local
 # 5 更新
 ```sql
 -- 1 查看表
-cdh3.ygbx.com :) SHOW TABLES;
+cdh3.yore.com :) SHOW TABLES;
 SHOW TABLES
 ↘ Progress: 0.00 rows, 0.00 B (0.00 rows/s., 0.00 B/s.) ┌─name────────────┐
 │ target          │
@@ -401,7 +401,7 @@ ALTER TABLE target_local ADD COLUMN indicator_3 Float64 COMMENT '新指标列3';
 
 
 -- 3 查看表信息
-cdh3.ygbx.com :) desc target_all;
+cdh3.yore.com :) desc target_all;
 DESCRIBE TABLE target_all
 ↑ Progress: 0.00 rows, 0.00 B (0.00 rows/s., 0.00 B/s.) 
 ┌─name────────┬─type────────────┬─default_type─┬─default_expression─┬─comment───┬─codec_expression─┬─ttl_expression─┐
@@ -417,7 +417,7 @@ DESCRIBE TABLE target_all
 
 -- 4 值统计
 --  4.1 合计 target_all 的 indicator_2
-cdh3.ygbx.com :) SELECT SUM(indicator_2) FROM target_all;
+cdh3.yore.com :) SELECT SUM(indicator_2) FROM target_all;
 SELECT SUM(indicator_2)
 FROM target_all
 ↑ Progress: 0.00 rows, 0.00 B (0.00 rows/s., 0.00 B/s.) ┌─SUM(indicator_2)─┐
@@ -426,7 +426,7 @@ FROM target_all
 ↗ Progress: 0.00 rows, 0.00 B (0.00 rows/s., 0.00 B/s.) → Progress: 60.00 million rows, 600.00 MB (1.33 billion rows/s., 13.33 GB/s.)  98%
 1 rows in set. Elapsed: 0.045 sec. Processed 60.00 million rows, 600.00 MB (1.33 billion rows/s., 13.27 GB/s.)
 --  4.2 合计 target_p1_all 的 indicator2
-cdh3.ygbx.com :) SELECT SUM(indicator2) FROM target_p1_all;
+cdh3.yore.com :) SELECT SUM(indicator2) FROM target_p1_all;
 SELECT SUM(indicator2)
 FROM target_p1_all
 ↘ Progress: 0.00 rows, 0.00 B (0.00 rows/s., 0.00 B/s.) ┌────SUM(indicator2)─┐
@@ -436,7 +436,7 @@ FROM target_p1_all
 1 rows in set. Elapsed: 0.071 sec. Processed 30.00 million rows, 240.00 MB (422.05 million rows/s., 3.38 GB/s.)
 
 -- 5 将表  target_p1_all 更新插入到 target_all 表
-cdh3.ygbx.com :) INSERT INTO target_all(id,indicator_2) SELECT id, indicator2 AS indicator_2 FROM target_p1_all;
+cdh3.yore.com :) INSERT INTO target_all(id,indicator_2) SELECT id, indicator2 AS indicator_2 FROM target_p1_all;
 INSERT INTO target_all (id, indicator_2) SELECT
     id,
     indicator2 AS indicator_2
@@ -445,7 +445,7 @@ FROM target_p1_all
 0 rows in set. Elapsed: 8.153 sec. Processed 30.00 million rows, 480.00 MB (3.68 million rows/s., 58.87 MB/s.)
 
 -- 6 验证。统计 target_all 表的 indicator_2 指标，其sum值基本等于 target_p1_all 表的 indicator2 字段值的sum
-cdh3.ygbx.com :) SELECT SUM(indicator_2) FROM target_all;
+cdh3.yore.com :) SELECT SUM(indicator_2) FROM target_all;
 SELECT SUM(indicator_2)
 FROM target_all
 ↙ Progress: 0.00 rows, 0.00 B (0.00 rows/s., 0.00 B/s.) ┌──SUM(indicator_2)─┐
@@ -456,7 +456,7 @@ FROM target_all
 
 -- 7 测试 600w 的数据集
 --  7.1 合计 target_all 的 indicator_3
-cdh3.ygbx.com :) SELECT SUM(indicator_3) FROM target_all;
+cdh3.yore.com :) SELECT SUM(indicator_3) FROM target_all;
 SELECT SUM(indicator_3)
 FROM target_all
 ↑ Progress: 0.00 rows, 0.00 B (0.00 rows/s., 0.00 B/s.) ┌─SUM(indicator_3)─┐
@@ -465,7 +465,7 @@ FROM target_all
 ↗ Progress: 0.00 rows, 0.00 B (0.00 rows/s., 0.00 B/s.) → Progress: 90.00 million rows, 837.44 MB (2.39 billion rows/s., 22.28 GB/s.)  98%
 1 rows in set. Elapsed: 0.038 sec. Processed 90.00 million rows, 837.44 MB (2.38 billion rows/s., 22.16 GB/s.)
 --  7.2 合计 target_p2_all 的 indicator3
-cdh3.ygbx.com :) SELECT SUM(indicator3) FROM target_p2_all;
+cdh3.yore.com :) SELECT SUM(indicator3) FROM target_p2_all;
 SELECT SUM(indicator3)
 FROM target_p2_all
 ↘ Progress: 0.00 rows, 0.00 B (0.00 rows/s., 0.00 B/s.) ┌────SUM(indicator3)─┐
@@ -474,7 +474,7 @@ FROM target_p2_all
 ↓ Progress: 0.00 rows, 0.00 B (0.00 rows/s., 0.00 B/s.) ↙ Progress: 6.00 million rows, 48.00 MB (220.20 million rows/s., 1.76 GB/s.)  98%
 1 rows in set. Elapsed: 0.027 sec. Processed 6.00 million rows, 48.00 MB (218.44 million rows/s., 1.75 GB/s.)
 -- 7.3 将表  target_p2_all 的指标更新插入到 target_all 表
-cdh3.ygbx.com :) INSERT INTO target_all(id,indicator_3) SELECT id, indicator3 AS indicator_3 FROM target_p2_all;
+cdh3.yore.com :) INSERT INTO target_all(id,indicator_3) SELECT id, indicator3 AS indicator_3 FROM target_p2_all;
 INSERT INTO target_all (id, indicator_3) SELECT
     id,
     indicator3 AS indicator_3
@@ -482,7 +482,7 @@ FROM target_p2_all
 ← Progress: 1.43 million rows, 22.81 MB (13.76 million rows/s., 220.14 MB/s.)  70%↖ Progress: 1.60 million rows, 25.56 MB (7.87 million rows/s., 125.93 MB/s.)  78%↑ Progress: 3.84 million rows, 61.38 MB (9.50 million rows/s., 152.04 MB/%Ok.
 0 rows in set. Elapsed: 1.682 sec. Processed 6.00 million rows, 96.00 MB (3.57 million rows/s., 57.08 MB/s.)
 -- 7.4 验证。统计 target_all 表的 indicator_3 指标，其sum值基本等于 target_p2_all 表的 indicator3 字段值的sum
-cdh3.ygbx.com :) SELECT SUM(indicator_3) FROM target_all;
+cdh3.yore.com :) SELECT SUM(indicator_3) FROM target_all;
 SELECT SUM(indicator_3)
 FROM target_all
 ↖ Progress: 0.00 rows, 0.00 B (0.00 rows/s., 0.00 B/s.) ┌─SUM(indicator_3)─┐

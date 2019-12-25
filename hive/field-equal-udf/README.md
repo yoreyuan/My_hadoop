@@ -77,8 +77,8 @@ Fetched 1 row(s) in 0.05s
 
 [cdh3:21000] upsert_test> SELECT field_equal("hive", "hive");
 Query: SELECT field_equal("hive", "hive")
-Query submitted at: 2019-11-27 10:06:18 (Coordinator: http://cdh3.ygbx.com:25000)
-Query progress can be monitored at: http://cdh3.ygbx.com:25000/query_plan?query_id=a8444f849fc7c6d4:f8cfb52100000000
+Query submitted at: 2019-11-27 10:06:18 (Coordinator: http://cdh3.yore.com:25000)
+Query progress can be monitored at: http://cdh3.yore.com:25000/query_plan?query_id=a8444f849fc7c6d4:f8cfb52100000000
 +-----------------------------------------+
 | upsert_test.field_equal('hive', 'hive') |
 +-----------------------------------------+

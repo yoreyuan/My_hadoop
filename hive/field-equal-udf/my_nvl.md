@@ -32,7 +32,7 @@ INSERT INTO tmp_test VALUES(3, "three");
 
 -- 3 case when
 --  可以看到 id 为 0 的 null 和 id 为 1 的 "" 都已经转成了 "0"
-[cdh3.ygbx.com:21000] default> SELECT id,CASE WHEN nullvalue(name) THEN "0" WHEN name="" THEN "0" ELSE TRIM(name) END AS name FROM tmp_test;
+[cdh3.yore.com:21000] default> SELECT id,CASE WHEN nullvalue(name) THEN "0" WHEN name="" THEN "0" ELSE TRIM(name) END AS name FROM tmp_test;
 +----+-------+
 | id | name  |
 +----+-------+
@@ -68,7 +68,7 @@ CREATE FUNCTION IF NOT EXISTS yore_nvl(STRING, STRING) RETURNS STRING LOCATION '
 
 
 -- 2 查看已创建的自定义函数
-[cdh3.ygbx.com:21000] default>  SHOW FUNCTIONS;
+[cdh3.yore.com:21000] default>  SHOW FUNCTIONS;
 +-------------+--------------------------+-------------+---------------+
 | return type | signature                | binary type | is persistent |
 +-------------+--------------------------+-------------+---------------+
@@ -80,7 +80,7 @@ Fetched 2 row(s) in 0.01s
 
 -- 3 使用
 --  3.1 不指定替换的字符串
-[cdh3.ygbx.com:21000] default> SELECT id,yore_nvl(name) AS name FROM tmp_test;
+[cdh3.yore.com:21000] default> SELECT id,yore_nvl(name) AS name FROM tmp_test;
 +----+-------+
 | id | name  |
 +----+-------+
@@ -92,7 +92,7 @@ Fetched 2 row(s) in 0.01s
 Fetched 4 row(s) in 0.11s
 
 --  3.2 指定替换的字符串 
-[cdh3.ygbx.com:21000] default> SELECT id,yore_nvl(name, "-") AS name FROM tmp_test;
+[cdh3.yore.com:21000] default> SELECT id,yore_nvl(name, "-") AS name FROM tmp_test;
 +----+-------+
 | id | name  |
 +----+-------+
