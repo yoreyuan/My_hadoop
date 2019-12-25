@@ -75,6 +75,8 @@ public class FieldEqualUDF extends UDF {
         }
     }
 
+
+
     public Boolean evaluate(String f1, String f2){
         if((f1==null && f2==null) || f1 == f2) return true;
         return f1.equals(f2);
