@@ -55,5 +55,7 @@ ClickHouse也可以以集群方式部署，但是在创建分布式表时有点�
 以分布式表方式在不进行表关联时其聚合统计性能非常高。在对 ClickHouse 有更好的管理能力的情况下，ClickHouse是一个不错的选择。
 
 
+> Kudu supports efficient inserts, updates and deletes of small numbers of rows and can replace HBase for most analytics-oriented use cases. 
 
+    
 

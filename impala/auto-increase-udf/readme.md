@@ -8,6 +8,9 @@ mvn clean install
 
 ## 上传到HDFS
 ```bash
+# 查看 jar 包
+jar -tvf SnowFlake-udf.jar
+
 # 创建存放 jar 包的HDFS路径
 hadoop fs -mkdir -p /app/udf-lib
 
@@ -71,7 +74,12 @@ Fetched 10 row(s) in 0.12s
 SELECT getSerial(quote) _id,id,rank,quote FROM quote LIMIT 10;
 
 
-
-
-
 ```
+
+**说明**： 理论上次 UDF 可以不用传入参数，只需每次调用返回唯一不重复值的。但是 在 [Limitations and Restrictions for Impala UDFs](http://impala.apache.org/docs/build/html/topics/impala_udf.html#ariaid-title23)
+
+> All Impala UDFs must be deterministic, that is, produce the same output each time when passed the same argument values. For example, an Impala UDF must not call functions such as rand() to produce different values for each invocation. It must not retrieve data from external sources, such as from disk or over the network.
+
+从官方文档可以看到，如果每次传入相同的参数时，它都会返回相同的输出。且 CHAR 和 VARCHAR 不能用户 UDF 的输出参数或返回参数。
+
+

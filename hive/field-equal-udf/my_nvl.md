@@ -30,7 +30,25 @@ INSERT INTO tmp_test VALUES(3, "three");
 | 1  |        |
 +----+--------+
 
--- 3 case when
+-- 3 查看系统自带的函数
+[cdh3.yore.com:21000] _impala_builtins> SHOW FUNCTIONS IN _impala_builtins LIKE 'nvl*';
++--------------+---------------------------------+-------------+---------------+
+| return type  | signature                       | binary type | is persistent |
++--------------+---------------------------------+-------------+---------------+
+| BIGINT       | nvl(BIGINT, BIGINT)             | BUILTIN     | true          |
+| BOOLEAN      | nvl(BOOLEAN, BOOLEAN)           | BUILTIN     | true          |
+| DECIMAL(*,*) | nvl(DECIMAL(*,*), DECIMAL(*,*)) | BUILTIN     | true          |
+| DOUBLE       | nvl(DOUBLE, DOUBLE)             | BUILTIN     | true          |
+| FLOAT        | nvl(FLOAT, FLOAT)               | BUILTIN     | true          |
+| INT          | nvl(INT, INT)                   | BUILTIN     | true          |
+| SMALLINT     | nvl(SMALLINT, SMALLINT)         | BUILTIN     | true          |
+| STRING       | nvl(STRING, STRING)             | BUILTIN     | true          |
+| TIMESTAMP    | nvl(TIMESTAMP, TIMESTAMP)       | BUILTIN     | true          |
+| TINYINT      | nvl(TINYINT, TINYINT)           | BUILTIN     | true          |
++--------------+---------------------------------+-------------+---------------+
+Fetched 10 row(s) in 0.01s
+
+-- 4 case when
 --  可以看到 id 为 0 的 null 和 id 为 1 的 "" 都已经转成了 "0"
 [cdh3.yore.com:21000] default> SELECT id,CASE WHEN nullvalue(name) THEN "0" WHEN name="" THEN "0" ELSE TRIM(name) END AS name FROM tmp_test;
 +----+-------+
