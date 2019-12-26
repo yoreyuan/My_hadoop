@@ -559,3 +559,160 @@ Fetched 10 row(s) in 0.43s
 
 
 ```
+
+## 4.5 HBase + Impala
+```bash
+# 进入 hbase shell
+hbase shell
+
+```
+
+```sql
+-- 建表。穿件四个列簇
+create 'hbasealltypessmall', 'boolsCF', 'intsCF', 'floatsCF', 'stringsCF'
+
+-- 查看
+hbase(main):003:0> list
+TABLE
+hbasealltypessmall
+1 row(s)
+Took 0.0142 seconds
+=> ["hbasealltypessmall"]
+
+
+```
+
+在 hive shell 中创建 表，因为 Impala shell 目前还不支持 `STORED BY` 语句，
+```sql
+-- 1 建表
+--  创建一个映射到 HBase 的外表， Impala 和 Hive 都可使用，因为当 Impala 或 Hive 删除表后， HBase 表不会受到影响
+--  WITH SERDEPROPERTIES 指定了第一列（ID）代表行键，并将SQL表的其余列映射到HBase列系列。映射依赖于表中列的顺序，而不是CREATE TABLE语句中的列名。
+--  注意：对于具有HBase表的Impala，确保良好性能的最重要方面是使用STRING列作为行键（id string）
+CREATE EXTERNAL TABLE hbasestringids (
+  id string,
+  bool_col boolean,
+  tinyint_col tinyint,
+  smallint_col smallint,
+  int_col int,
+  bigint_col bigint,
+  float_col float,
+  double_col double,
+  date_string_col string,
+  string_col string,
+  timestamp_col timestamp
+)STORED BY 'org.apache.hadoop.hive.hbase.HBaseStorageHandler'
+WITH SERDEPROPERTIES (
+  "hbase.columns.mapping" =
+  ":key,boolsCF:bool_col,intsCF:tinyint_col,intsCF:smallint_col,intsCF:int_col,intsCF:\
+  bigint_col,floatsCF:float_col,floatsCF:double_col,stringsCF:date_string_col,\
+  stringsCF:string_col,stringsCF:timestamp_col"
+)
+TBLPROPERTIES("hbase.table.name" = "hbasealltypessmall");
+
+-- 2 查看创建的表
+0: jdbc:hive2://cdh3:10000> show tables;
++-----------------+
+|    tab_name     |
++-----------------+
+| hbasestringids  |
++-----------------+
+1 row selected (0.07 seconds)
+
+```
+
+impala shell 中执行：`impala-shell` 
+```sql
+-- 1 刷新 Impala 元数据
+[cdh3.yore.com:21000] default> invalidate metadata;
+
+-- 2 使用 hbase 库
+[cdh3.yore.com:21000] default> USE hbase;
+
+-- 3 查看表
+[cdh3.yore.com:21000] hbase> SHOW TABLES;
+Query: SHOW TABLES
++----------------+
+| name           |
++----------------+
+| hbasestringids |
++----------------+
+Fetched 1 row(s) in 0.10s
+
+-- 4 查看建的表结构
+[cdh3.yore.com:21000] hbase> DESC hbasestringids;
+Query: describe hbasestringids
++-----------------+-----------+---------+
+| name            | type      | comment |
++-----------------+-----------+---------+
+| id              | string    |         |
+| bool_col        | boolean   |         |
+| double_col      | double    |         |
+| float_col       | float     |         |
+| bigint_col      | bigint    |         |
+| int_col         | int       |         |
+| smallint_col    | smallint  |         |
+| tinyint_col     | tinyint   |         |
+| date_string_col | string    |         |
+| string_col      | string    |         |
+| timestamp_col   | timestamp |         |
++-----------------+-----------+---------+
+Fetched 11 row(s) in 0.01s
+
+-- 5 插入测试数据
+[cdh3.yore.com:21000] hbase> INSERT INTO hbasestringids VALUES('0001', true, 3.141, 9.94, 1234567, 32768, 4000, 76, '2014-12-31', 'Hello world', now());
+Modified 1 row(s) in 1.73s
+
+[cdh3.yore.com:21000] hbase> INSERT INTO hbasestringids VALUES('0002', false, 2.004, 6.196, 1500, 8000, 129, 127, '2014-01-01', 'Foo bar', now());
+Modified 1 row(s) in 0.11s
+
+
+-- 6 查看数据
+[cdh3.yore.com:21000] hbase> SELECT * FROM hbasestringids ;
++------+----------+------------+-------------------+------------+---------+--------------+-------------+-----------------+-------------+-------------------------------+
+| id   | bool_col | double_col | float_col         | bigint_col | int_col | smallint_col | tinyint_col | date_string_col | string_col  | timestamp_col                 |
++------+----------+------------+-------------------+------------+---------+--------------+-------------+-----------------+-------------+-------------------------------+
+| 0001 | true     | 3.141      | 9.939999580383301 | 1234567    | 32768   | 4000         | 76          | 2014-12-31      | Hello world | 2019-12-25 17:43:43.204864000 |
+| 0002 | false    | 2.004      | 6.196000099182129 | 1500       | 8000    | 129          | 127         | 2014-01-01      | Foo bar     | 2019-12-25 17:44:58.849765000 |
++------+----------+------------+-------------------+------------+---------+--------------+-------------+-----------------+-------------+-------------------------------+
+Fetched 2 row(s) in 0.66s
+
+-- 7 查询数据
+[cdh3.yore.com:21000] hbase> SELECT * FROM hbasestringids WHERE id = '0001';
++------+----------+------------+-------------------+------------+---------+--------------+-------------+-----------------+-------------+-------------------------------+
+| id   | bool_col | double_col | float_col         | bigint_col | int_col | smallint_col | tinyint_col | date_string_col | string_col  | timestamp_col                 |
++------+----------+------------+-------------------+------------+---------+--------------+-------------+-----------------+-------------+-------------------------------+
+| 0001 | true     | 3.141      | 9.939999580383301 | 1234567    | 32768   | 4000         | 76          | 2014-12-31      | Hello world | 2019-12-25 17:43:43.204864000 |
++------+----------+------------+-------------------+------------+---------+--------------+-------------+-----------------+-------------+-------------------------------+
+Fetched 1 row(s) in 0.12s
+
+```
+
+在 hbase shell 中查看数据
+```sql
+hbase(main):006:0> scan 'hbasealltypessmall'
+ROW                                                                  COLUMN+CELL
+ 0001                                                                column=boolsCF:bool_col, timestamp=1577267024789, value=true
+ 0001                                                                column=floatsCF:double_col, timestamp=1577267024789, value=3.141
+ 0001                                                                column=floatsCF:float_col, timestamp=1577267024789, value=9.939999580383301
+ 0001                                                                column=intsCF:\x0Abigint_col, timestamp=1577267024789, value=1234567
+ 0001                                                                column=intsCF:int_col, timestamp=1577267024789, value=32768
+ 0001                                                                column=intsCF:smallint_col, timestamp=1577267024789, value=4000
+ 0001                                                                column=intsCF:tinyint_col, timestamp=1577267024789, value=76
+ 0001                                                                column=stringsCF:date_string_col, timestamp=1577267024789, value=2014-12-31
+ 0001                                                                column=stringsCF:string_col, timestamp=1577267024789, value=Hello world
+ 0001                                                                column=stringsCF:timestamp_col, timestamp=1577267024789, value=2019-12-25 17:43:43.204864000
+ 0002                                                                column=boolsCF:bool_col, timestamp=1577267098865, value=false
+ 0002                                                                column=floatsCF:double_col, timestamp=1577267098865, value=2.004
+ 0002                                                                column=floatsCF:float_col, timestamp=1577267098865, value=6.196000099182129
+ 0002                                                                column=intsCF:\x0Abigint_col, timestamp=1577267098865, value=1500
+ 0002                                                                column=intsCF:int_col, timestamp=1577267098865, value=8000
+ 0002                                                                column=intsCF:smallint_col, timestamp=1577267098865, value=129
+ 0002                                                                column=intsCF:tinyint_col, timestamp=1577267098865, value=127
+ 0002                                                                column=stringsCF:date_string_col, timestamp=1577267098865, value=2014-01-01
+ 0002                                                                column=stringsCF:string_col, timestamp=1577267098865, value=Foo bar
+ 0002                                                                column=stringsCF:timestamp_col, timestamp=1577267098865, value=2019-12-25 17:44:58.849765000
+2 row(s)
+Took 0.4459 seconds
+
+```
+
