@@ -64,12 +64,13 @@ public class MyNVLUDF extends UDF {
      * @date: 2019/12/25 9:20 AM
      */
     public String evaluate(String str_f, String replacement) throws UnsupportedEncodingException {
+        //str_f = new String(str_f.trim().getBytes(), StandardCharsets.ISO_8859_1);
         if(str_f==null || "".equals(str_f) || "".equals(str_f.replaceAll("\\s", ""))){
             return replacement;
         }
 //        return str_f.trim();
 //        return str_f;
-        return new String(str_f.trim().getBytes(), StandardCharsets.UTF_8);
+        return str_f;
     }
 
 }
