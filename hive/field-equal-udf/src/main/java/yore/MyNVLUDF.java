@@ -3,6 +3,9 @@ package yore;
 import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDF;
 
+import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
+
 /**
  * 实现一个UDF，
  *
@@ -45,7 +48,7 @@ public class MyNVLUDF extends UDF {
      * @return str_f 或者 "0"
      * @date: 2019/12/25 9:20 AM
      */
-    public String evaluate(String str_f){
+    public String evaluate(String str_f) throws UnsupportedEncodingException {
         return evaluate(str_f, "0");
     }
 
@@ -57,14 +60,16 @@ public class MyNVLUDF extends UDF {
      * @auther: yore
      * @param str_f 字符串字段值
      * @param replacement 如果为  null 或者 ""  是替换的 值
-     * @return str_f 或者 $replacement
+     * @return str_f 或者 ${replacement}
      * @date: 2019/12/25 9:20 AM
      */
-    public String evaluate(String str_f, String replacement){
+    public String evaluate(String str_f, String replacement) throws UnsupportedEncodingException {
         if(str_f==null || "".equals(str_f) || "".equals(str_f.replaceAll("\\s", ""))){
             return replacement;
         }
-        return str_f.trim();
+//        return str_f.trim();
+//        return str_f;
+        return new String(str_f.trim().getBytes(), StandardCharsets.UTF_8);
     }
 
 }

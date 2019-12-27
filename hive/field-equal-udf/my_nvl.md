@@ -18,6 +18,7 @@ INSERT INTO tmp_test VALUES(0, NULL);
 INSERT INTO tmp_test VALUES(1, "");
 INSERT INTO tmp_test VALUES(2, "  two ");
 INSERT INTO tmp_test VALUES(3, "three");
+INSERT INTO tmp_test VALUES(4, " bigdata 大数据 ");
 
 -- 2 查看测试表
 [cdh3.ygbx.com:21000] default> select * from tmp_test;
@@ -128,6 +129,70 @@ DROP FUNCTION  yore_nvl(STRING, STRING);
 
 ```
 
- 
- 
+
+## 3.3 其它类型的支持
+```sql
+-- ARRAY, BIGINT, BINARY, BOOLEAN, CHAR, DATE, DATETIME, DECIMAL, REAL, FLOAT, INTEGER, MAP, SMALLINT, STRING, STRUCT, TIMESTAMP, TINYINT, VARCHAR
+
+-- 建表
+CREATE TABLE t(
+a1 BIGINT,
+a2 INTEGER,
+b BOOLEAN, 
+c1 CHAR(5),
+c2 VARCHAR(30),
+c3 STRING,
+--d1 DATE,
+--d2 DATETIME,
+d3 TIMESTAMP,
+e1 FLOAT,
+e2 DOUBLE
+);
+
+-- 插入测试数据
+insert into t values(111, 1, true, CAST('a' AS CHAR(5)), CAST("Impala" AS VARCHAR(30)), "apache impala", "2019-12-26 11:02:03", 3.0, 3.1415926);
+insert into t(a1,b) values(222, false);
+--  insert into t(a1, a2, b, c2, c3) values(333, 3, false, CAST("  bigdata 大数据 " AS VARCHAR(30)), "  bigdata2 大数据2 " );
+
+
+-- 查看表结构信息
+[cdh3.yore.com:21000] default> DESC t;
++------+-------------+---------+
+| name | type        | comment |
++------+-------------+---------+
+| a1   | bigint      |         |
+| a2   | int         |         |
+| b    | boolean     |         |
+| c1   | char(5)     |         |
+| c2   | varchar(30) |         |
+| c3   | string      |         |
+| d3   | timestamp   |         |
+| e1   | float       |         |
+| e2   | double      |         |
++------+-------------+---------+
+Fetched 9 row(s) in 0.01s
+
+-- 查看数据
+[cdh3.yore.com:21000] default> select * from t;
++-----+------+-------+-------+--------+---------------+---------------------+------+-----------+
+| a1  | a2   | b     | c1    | c2     | c3            | d3                  | e1   | e2        |
++-----+------+-------+-------+--------+---------------+---------------------+------+-----------+
+| 111 | 1    | true  | a     | Impala | apache impala | 2019-12-26 11:02:03 | 3    | 3.1415926 |
+| 222 | NULL | false | NULL  | NULL   | NULL          | NULL                | NULL | NULL      |
++-----+------+-------+-------+--------+---------------+---------------------+------+-----------+
+Fetched 1 row(s) in 0.11s
+
+
+-- 测试
+SELECT yore_nvl(CAST(a1 AS STRING)) AS name FROM t;
+SELECT yore_nvl(CAST(a2 AS STRING)) AS name FROM t;
+SELECT yore_nvl(CAST(b AS STRING)) AS name FROM t;
+SELECT yore_nvl(CAST(c1 AS STRING)) AS name FROM t;
+SELECT yore_nvl(CAST(c2 AS STRING)) AS name FROM t;
+SELECT yore_nvl(CAST(c3 AS STRING)) AS name FROM t;
+SELECT yore_nvl(CAST(d3 AS STRING)) AS name FROM t;
+SELECT yore_nvl(CAST(e1 AS STRING)) AS name FROM t;
+SELECT yore_nvl(CAST(e2 AS STRING)) AS name FROM t;
+
+```
  

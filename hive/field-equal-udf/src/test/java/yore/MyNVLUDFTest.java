@@ -9,7 +9,7 @@ import org.junit.Test;
 public class MyNVLUDFTest {
 
     @Test
-    public void udfTest() {
+    public void udfTest() throws java.io.UnsupportedEncodingException {
         MyNVLUDF myNVLUDF = new MyNVLUDF();
 
         String str_f = null;
