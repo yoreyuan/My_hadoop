@@ -85,6 +85,8 @@ CREATE FUNCTION IF NOT EXISTS yore_nvl(STRING) RETURNS STRING LOCATION 'hdfs:/ap
 --  1.2 指定 为 null 或者 "" 需要替换的值时为 参数 2 
 CREATE FUNCTION IF NOT EXISTS yore_nvl(STRING, STRING) RETURNS STRING LOCATION 'hdfs:/app/udf-lib/field-equal-udf.jar' symbol='yore.MyNVLUDF';
 
+CREATE FUNCTION IF NOT EXISTS yore_nvl LOCATION 'hdfs:/app/udf-lib/field-equal-udf.jar' symbol='yore.MyNVLUDF';
+
 
 -- 2 查看已创建的自定义函数
 [cdh3.yore.com:21000] default>  SHOW FUNCTIONS;

@@ -23,9 +23,14 @@ hadoop fs -put SnowFlake-udf.jar /app/udf-lib/
 -- 创建函数
 -- CREATE FUNCTION IF NOT EXISTS row_sequence() RETURNS BIGINT LOCATION 'hdfs:///app/udf-lib/hive-contrib-2.1.1-cdh6.2.0.jar' symbol='org.apache.hadoop.hive.contrib.udf.UDFRowSequence';
 -- CREATE FUNCTION IF NOT EXISTS getSerial() RETURNS BIGINT LOCATION 'hdfs:///app/udf-lib/SnowFlake-udf.jar' symbol='yore.SerialUDF';
+
+-- 临时函数方式 （在 Impala 重启后自动失效）
 CREATE FUNCTION IF NOT EXISTS getSerial(bigint) RETURNS BIGINT LOCATION 'hdfs:///app/udf-lib/SnowFlake-udf.jar' symbol='yore.SerialUDF';
 CREATE FUNCTION IF NOT EXISTS getSerial(string) RETURNS BIGINT LOCATION 'hdfs:///app/udf-lib/SnowFlake-udf.jar' symbol='yore.SerialUDF';
 
+
+-- 永久方式
+CREATE FUNCTION IF NOT EXISTS getSerial LOCATION 'hdfs:///app/udf-lib/SnowFlake-udf.jar' symbol='yore.SerialUDF';
 
 
 SELECT row_sequence(),id,rank,quote FROM quote LIMIT 10;
