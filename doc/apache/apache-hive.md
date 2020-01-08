@@ -699,3 +699,118 @@ ________________________________________________________________________________
 
 ```
 
+## 2.6 Hive 的事物表
+```sql
+-- 开启事务 
+-- https://cwiki.apache.org/confluence/display/Hive/Hive+Transactions#HiveTransactions-Configuration
+SET hive.support.concurrency = true;
+SET hive.enforce.bucketing = true;				
+SET hive.exec.dynamic.partition.mode = nonstrict;
+SET hive.txn.manager = org.apache.hadoop.hive.ql.lockmgr.DbTxnManager;
+SET hive.compactor.initiator.on = true;
+SET hive.compactor.worker.threads = 1;
+
+
+CREATE TABLE employee (
+id int, 
+name string, 
+salary int
+)CLUSTERED BY (id) INTO 2 BUCKETS 
+STORED AS ORC TBLPROPERTIES("transactional"="true");
+
+-- 插入数据
+--  如果报如下错误，可以按照下面说的解决
+INSERT INTO employee VALUES (1, 'Jerry', 5000),(2, 'Tom', 8000),(3, 'Kate', 6000);
+
+```
+
+如果是 Hive 是CDH平台上的，可能会报 `java.io.FileNotFoundException` 解决方法
+```log
+java.io.FileNotFoundException: File does not exist: hdfs://cdh1.yore.com:8020/user/yarn/mapreduce/mr-framework/3.0.0-cdh6.3.2-mr-framework.tar.gz
+        at org.apache.hadoop.fs.Hdfs.getFileStatus(Hdfs.java:145)
+        at org.apache.hadoop.fs.AbstractFileSystem.resolvePath(AbstractFileSystem.java:488)
+        at org.apache.hadoop.fs.FileContext$25.next(FileContext.java:2225)
+        at org.apache.hadoop.fs.FileContext$25.next(FileContext.java:2221)
+        at org.apache.hadoop.fs.FSLinkResolver.resolve(FSLinkResolver.java:90)
+        at org.apache.hadoop.fs.FileContext.resolve(FileContext.java:2227)
+        at org.apache.hadoop.fs.FileContext.resolvePath(FileContext.java:607)
+        at org.apache.hadoop.mapreduce.JobSubmitter.addMRFrameworkToDistributedCache(JobSubmitter.java:460)
+        at org.apache.hadoop.mapreduce.JobSubmitter.submitJobInternal(JobSubmitter.java:146)
+        at org.apache.hadoop.mapreduce.Job$11.run(Job.java:1570)
+        at org.apache.hadoop.mapreduce.Job$11.run(Job.java:1567)
+        at java.security.AccessController.doPrivileged(Native Method)
+        at javax.security.auth.Subject.doAs(Subject.java:422)
+        at org.apache.hadoop.security.UserGroupInformation.doAs(UserGroupInformation.java:1875)
+        at org.apache.hadoop.mapreduce.Job.submit(Job.java:1567)
+        at org.apache.hadoop.mapred.JobClient$1.run(JobClient.java:576)
+        at org.apache.hadoop.mapred.JobClient$1.run(JobClient.java:571)
+        at java.security.AccessController.doPrivileged(Native Method)
+        at javax.security.auth.Subject.doAs(Subject.java:422)
+        at org.apache.hadoop.security.UserGroupInformation.doAs(UserGroupInformation.java:1875)
+        at org.apache.hadoop.mapred.JobClient.submitJobInternal(JobClient.java:571)
+        at org.apache.hadoop.mapred.JobClient.submitJob(JobClient.java:562)
+        at org.apache.hadoop.hive.ql.exec.mr.ExecDriver.execute(ExecDriver.java:444)
+        at org.apache.hadoop.hive.ql.exec.mr.MapRedTask.execute(MapRedTask.java:151)
+        at org.apache.hadoop.hive.ql.exec.Task.executeTask(Task.java:199)
+        at org.apache.hadoop.hive.ql.exec.TaskRunner.runSequential(TaskRunner.java:97)
+        at org.apache.hadoop.hive.ql.Driver.launchTask(Driver.java:2200)
+        at org.apache.hadoop.hive.ql.Driver.execute(Driver.java:1843)
+        at org.apache.hadoop.hive.ql.Driver.runInternal(Driver.java:1563)
+        at org.apache.hadoop.hive.ql.Driver.run(Driver.java:1339)
+        at org.apache.hadoop.hive.ql.Driver.run(Driver.java:1328)
+        at org.apache.hadoop.hive.cli.CliDriver.processLocalCmd(CliDriver.java:239)
+        at org.apache.hadoop.hive.cli.CliDriver.processCmd(CliDriver.java:187)
+        at org.apache.hadoop.hive.cli.CliDriver.processLine(CliDriver.java:409)
+        at org.apache.hadoop.hive.cli.CliDriver.executeDriver(CliDriver.java:836)
+        at org.apache.hadoop.hive.cli.CliDriver.run(CliDriver.java:772)
+        at org.apache.hadoop.hive.cli.CliDriver.main(CliDriver.java:699)
+        at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+        at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+        at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+        at java.lang.reflect.Method.invoke(Method.java:498)
+        at org.apache.hadoop.util.RunJar.run(RunJar.java:313)
+        at org.apache.hadoop.util.RunJar.main(RunJar.java:227)
+Job Submission failed with exception 'java.io.FileNotFoundException(File does not exist: hdfs://cdh1.yore.com:8020/user/yarn/mapreduce/mr-framework/3.0.0-cdh6.3.2-mr-framework.tar.gz)'
+FAILED: Execution Error, return code 1 from org.apache.hadoop.hive.ql.exec.mr.MapRedTask. File does not exist: hdfs://cdh1.yore.com:8020/user/yarn/mapreduce/mr-framework/3.0.0-cdh6.3.2-mr-framework.tar.gz
+```
+
+**解决**：进入 Cloudera Manager Admin Web 页面，点击 YARN 组件服务，-> 操作 -> 安装 YARN MapReduce 框架 JAR
+
+查看插入的数据 HDFS 目录
+```bash
+[root@cdh2 ~]# hadoop fs -ls /user/hive/warehouse/employee
+Found 2 items
+drwxr-xr-x   - root supergroup          0 2020-01-07 15:22 /user/hive/warehouse/employee/delta_0000003_0000003_0000
+drwxr-xr-x   - root supergroup          0 2020-01-07 15:24 /user/hive/warehouse/employee/delta_0000004_0000004_0000
+[root@cdh2 ~]#
+[root@cdh2 ~]# hadoop fs -ls /user/hive/warehouse/employee/delta_0000003_0000003_0000
+Found 2 items
+-rw-r--r--   3 root supergroup        211 2020-01-07 15:22 /user/hive/warehouse/employee/delta_0000003_0000003_0000/bucket_00000
+-rw-r--r--   3 root supergroup        708 2020-01-07 15:22 /user/hive/warehouse/employee/delta_0000003_0000003_0000/bucket_00001
+
+```
+
+查看文件内容
+```bash
+#orc-tools data bucket_00000
+[root@cdh2 ~]# hive --orcfiledump -d   /user/hive/warehouse/employee/delta_0000003_0000003_0000/bucket_00001
+Processing data file /user/hive/warehouse/employee/delta_0000003_0000003_0000/bucket_00001 [length: 708]
+{"operation":0,"originalTransaction":3,"bucket":1,"rowId":0,"currentTransaction":3,"row":{"_col0":1,"_col1":"Jerry","_col2":5000}}
+________________________________________________________________________________________________________________________
+
+```
+
+接着查看 hive 表数据
+```sql
+hive> SELECT row__id, id, name, salary FROM employee;
+OK
+{"transactionid":4,"bucketid":0,"rowid":0}      2       Tom     8000
+{"transactionid":3,"bucketid":1,"rowid":0}      1       Jerry   5000
+{"transactionid":4,"bucketid":1,"rowid":0}      3       Kate    6000
+Time taken: 0.233 seconds, Fetched: 3 row(s)
+
+```
+
+
+
+

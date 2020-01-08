@@ -38,16 +38,23 @@ git reset --hard b5f514c04c785e19cac3c7155a43c55050e1cb41
 
 ```
 
+* Soft 
+	- Files won't change,differences will be staged for commit
+* Mixed
+	- Files wont't change,differences won't be staged
+* Hard
+	- Files will be reverted to thes state of the selected commit. Warning:any local changes will be lost.
+* Keep
+	- Files will be reverted to the state of the seleted commit, but local changes will be kept intact
 
 
-Soft 
-	Files won't change,differences will be staged for commit
-Mixed
-	Files wont't change,differences won't be staged
-Hard
-	Files will be reverted to thes state of the selected commit. Warning:any local changes will be lost.
-Keep
-	Files will be reverted to the state of the seleted commit, but local changes will be kept intact
+```bash
+# 去除误 add 的文件
+#  只会删除 git 缓存区记录，真实文件并不会删除）
+git rm --cache clickhouse/ch-jdbc-client/ch-jdbc-client.iml
+#  同时删除物理文件，回收站也无法找到
+git rm -f xxx.file
 
+```
 
 

@@ -242,6 +242,14 @@ cp phoenix-client/target/phoenix-5.0.0-HBase-2.0-client.jar $PHOENIX_HOME/
 </property>
 ```
 
+如果使用 Phoenix 的二级索引，则还需要配置 (`hbase-site.xml 的 RegionServer 高级配置代码段（安全阀）`)
+```xml
+<property>
+<name>hbase.regionserver.wal.codec</name>
+<value>org.apache.hadoop.hbase.regionserver.wal.IndexedWALEditCodec</value>
+</property>
+
+```
 
 
 # 2 Using
