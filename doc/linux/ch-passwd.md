@@ -12,11 +12,16 @@ groupadd 组名
 # 新建用户同时增加工作组
 useradd -g 组名 用户名   
 
+
 # 2 删除用户
 userdel 用户名
 groupdel 用户名
 # 强制删除该用户的主目录和主目录下的所有文件和子目录）
 # usermod –G 组名 用户名
+
+## 2.1 完全删除用户
+userdel -r 用户名
+
 
 ```
 
