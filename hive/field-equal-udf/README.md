@@ -64,6 +64,16 @@ hive> exit;
 
 ```
 
+## 1.4 关于永久函数的问题
+使用 `CREATE FUNCTION field_equal AS 'yore.FieldEqualUDF' USING jar 'hdfs:/app/udf-lib/field-equal-udf.jar';` 确实可以创建永久函数，使用 Hive CLI 和 使用 `hive -f /my-hive.sql` 也没问题。
+当时当我们使用其他工具（比如：HUE、DBeaver 等）或者 beeline 时会报错，一般如果非要添加 UDF ，则可以通过修改认证函数的源码，将我们的jar包添加进入，重新编译，替换原先的jar。但是这样非常麻烦，也不建议这样做。
+
+通过查看 Hive 的官方文档，可以看到 Hive CLI 是一个老的 cli 工具，Beeline 则是一个新的，这里我也是建议直接使用最新的 cli 工具 Beeline。
+执行脚本可以通过 `beeline -d "org.apache.hive.jdbc.HiveDriver" -u "jdbc:hive2://cdh3:10000/default" -f ./my-hive.sql`，客户端工具也可以使用 beeline，
+同时 HUE 和 DBeaver 也是可以正常使用的，它们中间创建的 UDF 是可以互相识别和调用的。 
+
+<br/>
+
 # Impala
 ```sql
 -- 创建自定义函数
