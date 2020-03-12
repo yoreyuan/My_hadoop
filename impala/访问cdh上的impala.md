@@ -1,6 +1,12 @@
 200 服务器访问 CDH 权限和方法
 --------
 
+# 资料
+[Cloudera Enterprise 6.0 Documentation](https://docs.cloudera.com/documentation/enterprise/6/6.0.html)
+[New Features in CDH 6.0.0](https://docs.cloudera.com/documentation/enterprise/6/release-notes/topics/rg_cdh_600_new_features.html#impala_new_600)
+[CDH - Impala]()
+
+
 # 1 数据迁移
 数据同步的工具有很多，比如Hadoop和结构化数据存储之间高效批量数据传输的工具Apache Sqoop，借助于 Hadoop集群可以并行的高效传输数据，
 但是这种方式往往需要依赖于一个Hadoop环境，在生产环境有时我们并没有直接的权限操作这个环境，而是只提供一个HDFS的端口，这时用Sqoop就不是很方便。
@@ -60,7 +66,7 @@ insert into tmp_test values(1, "a"),(2, "b"), (3, "c");
 #  --hivevar  格式为 name=value，配置会话级别的变量名和值，例如 --hivevar hive.security.authorization.enabled=false
 #  -e   query, 执行的 查询语句
 #  --help  查看帮助
-beeline -n hive -p hive -d "org.apache.hive.jdbc.HiveDriver" -u "jdbc:hive2://cdh3:10000/default" \
+beeline -n hive -p hive -d "org.apache.hive.jdbc.HiveDriver" -u "jdbc:hive2://cdh3:10000/default" --color=true \
 --hiveconf mapreduce.job.queuename=datacenter  -e "select count(*) from hive_test.tmp_test"
 
 
@@ -154,7 +160,7 @@ rm -rf impala_drive/
 #  如果有错误提示 Error: [Simba][JDBC](11975) Unsupported transaction isolation level: 4. (state=HY000,code=11975)
 #  可以加上参数：--isolation=default 
 beeline -n impala -d "com.cloudera.impala.jdbc41.Driver" -u "jdbc:impala://cdh3:21050/impala_demo" \
---isolation=default \
+--color=true --isolation=TRANSACTION_SERIALIZABLE --incremental=false  \
 -e "SELECT id,movie_name,rating_num,rating_people,release_date FROM movie ORDER BY release_date DESC LIMIT 5;"
 
 
@@ -164,4 +170,9 @@ beeline -n impala -d "com.cloudera.impala.jdbc41.Driver" -u "jdbc:impala://cdh3:
 -f ./my-impala.sql
 
 ``` 
+
+<br/>
+
+也可以访问我的 blog [Beeline 的进阶使用](https://blog.csdn.net/github_39577257/article/details/104645603)关于连接 Impala 部分的内容
+
 
