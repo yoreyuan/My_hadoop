@@ -26,7 +26,7 @@ tables_path="/tmp/${database_name}_ables-${currentTimeStamp}.txt"
 # 获取库下的所有表
 echo -e "==================== \t 开始导出表信息"
 
-beeline -n hive -p hive -d "org.apache.hive.jdbc.HiveDriver" -u "jdbc:hive2://cdh3:10000/impala_demo" --showHeader=false --outputformat=csv2 -e "show tables" > $tables_path
+beeline -n hive -p hive -d "org.apache.hive.jdbc.HiveDriver" -u "jdbc:hive2://cdh3:10000/$database_name" --showHeader=false --outputformat=csv2 -e "show tables" > $tables_path
 
 
 # 获取表文件中所有表及表大小 
