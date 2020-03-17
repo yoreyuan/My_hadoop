@@ -31,18 +31,18 @@ db_base_path="/user/hive/warehouse"
 
 ### 读取输入参数。可以直接回车
 echo ">> 直接回车将采用默认值！"
-read -p "请输入需要导出的库名（默认为 default）:" DB_NAME
-read -p "请输入hive 的 jdbc url（默认为 jdbc:hive2://localhost:10000/$DB_NAME）:" JDBC_URL
+#read -p "请输入需要导出的库名（默认为 default）:" DB_NAME
+read -p "请输入hive 的 jdbc url（默认为 jdbc:hive2://localhost:10000/default）:" JDBC_URL
 read -p "请输入hive 的用户名（如果没有可以直接回车跳过）:" HIVE_USER
 read -p "请输入hive 的密码（如果没有可以直接回车跳过）:" HIVE_PASSD
-#read -p "请输入库的位置（默认为 /user/hive/warehouse）:" DB_PATH
+read -p "请输入库的位置（默认为 /user/hive/warehouse）:" DB_PATH
 
 # 判断输入的参数是否为 null。
 #  -z "$str" 字符串为 empty。  -n "$str" 字符串不为 empty。
-if [ -n "$DB_NAME" ]; then
-    database_name="$DB_NAME"
-    hive_url="jdbc:hive2://localhost:10000/$database_name"
-fi
+#if [ -n "$DB_NAME" ]; then
+#    database_name="$DB_NAME"
+#    hive_url="jdbc:hive2://localhost:10000/$database_name"
+#fi
 if [ -n "$JDBC_URL" ]; then
     hive_url="$JDBC_URL"
 fi
@@ -52,9 +52,9 @@ fi
 if [ -n "$HIVE_PASSD" ]; then
     hive_password="$HIVE_PASSD"
 fi
-#if [ -n "$DB_PATH" ]; then
-#    db_base_path="$DB_PATH"
-#fi
+if [ -n "$DB_PATH" ]; then
+    db_base_path="$DB_PATH"
+fi
 
 #echo -e "database_name=$database_name\nhive_url=$hive_url\ndb_base_path=$db_base_path"
 
@@ -67,11 +67,11 @@ fi
 #echo -e "==================== \t 开始导出表信息"
 #
 #
-## desc formatted 
+## desc formatted
 #beeline -n hive -p hive -d "org.apache.hive.jdbc.HiveDriver" -u $hive_url --showHeader=false --outputformat=csv2 -e "show tables" > $tables_path
 #
 #
-## 获取表文件中所有表及表大小 
+## 获取表文件中所有表及表大小
 #echo "表名,大小" >>./${database_name}_result.csv
 #for i in `cat $tables_path`
 #do
@@ -94,7 +94,11 @@ fi
 ###########################
 ###########################
 
-java -jar hive-get-tables-info-1.0.jar $database_name $hive_url $hive_username $hive_password
+# 通过 beeline 方式获取表大小信息
+#java -jar hive-get-tables-info-1.0.jar $database_name $hive_url $hive_username $hive_password
+
+# 通过 HDFS 方式获取表大小信息
+java -jar hive-get-tables-info-1.1.jar $hive_url "$hive_username" "$hive_password" "$db_base_path"
 
 echo -e "====================\t SUCCESS!"
 
