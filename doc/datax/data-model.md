@@ -338,3 +338,81 @@ cpws_json string
 STORED AS orc;
 
 LOAD DATA LOCAL INPATH '/root/mongo_data/*'  OVERWRITE INTO TABLE m_cpws_info_w3;
+
+# ODPS -> Hive（HDFS）
+* 如果是带有 Kerberos 认证需要添加 `haveKerberos`、`kerberosKeytabFilePath`、`kerberosPrincipal` 配置项；
+* 如果是带有 SASL ，需要在 **hadoopConfig** 下配置 `dfs.http.policy=HTTPS_ONLY`、`dfs.data.transfer.protection=integrity` 配置项；
+* 如果是域外访问 HDFS，需要在 **hadoopConfig** 下配置 `dfs.client.use.datanode.hostname=true`、`dfs.datanode.address`配置项。
+
+
+```json
+{
+  "job": {
+    "setting": {
+      "speed": {
+        "channel": 1
+      }
+    },
+    "content": [
+      {
+        "reader": {
+          "name": "odpsreader",
+          "parameter": {
+            "accessId": "3o************DZ",
+            "accessKey": "Myk************************Tly",
+            "odpsServer": "http://xx.x.xxx.xxx/api",
+            "tunnelServer": "http://xx.x.xxx.xxx",
+            "project": "targetProjectName",
+            "table": "tableName",
+            "column": [
+              "customer_id",
+              "nickname"
+            ]
+          }
+        },
+        "writer": {
+          "name": "hdfswriter",
+          "parameter": {
+            "defaultFS": "hdfs://xx.x.xxx.xxx:8020",
+            "path": "/user/hive/warehouse/xxx.db/xxx_tb",
+            "fileType": "orc",
+            "compress": "NONE",
+            "fieldDelimiter": "|",
+            "fileName": "xxx",
+            "column": [
+              {
+                "name": "col1",
+                "type": "BIGINT"
+              },
+              {
+                "name": "col2",
+                "type": "STRING"
+              },
+              {
+                "name": "col3",
+                "type": "TIMESTAMP"
+              },
+              {
+                "name": "col4",
+                "type": "date"
+              }
+            ],
+            "haveKerberos": true,
+            "kerberosKeytabFilePath": "/xxx/xxxx/xxx.keytab",
+            "kerberosPrincipal": "xxx/xxxx@XXX.COM",
+            "hadoopConfig": {
+              "dfs.http.policy": "HTTPS_ONLY",
+              "dfs.data.transfer.protection": "integrity",
+              "dfs.client.use.datanode.hostname": true,
+              "dfs.datanode.address": "x.x.x.x:1004"
+            },
+            "writeMode": "append"
+          }
+        }
+      }
+    ]
+  }
+}
+```
+
+
