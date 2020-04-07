@@ -18,8 +18,8 @@
 
         <hadoop.version>2.7.7</hadoop.version>
         <hive.version>1.2.2</hive.version>
-        <provided.scope>provided</provided.scope>
-        <!--<provided.scope>compile</provided.scope>-->
+        <!--<provided.scope>provided</provided.scope>-->
+        <provided.scope>compile</provided.scope>
     </properties>
 
 
