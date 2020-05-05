@@ -389,6 +389,237 @@ nohup beeline -n hive -p hive -d "org.apache.hive.jdbc.HiveDriver" -u "jdbc:hive
 ```
 
 
+# 2 SQLLine
+正如 Beeline 介绍部分，Beeline 使用的是 SQLLine，那我们这部分使用 SQLLine 来查询数据，这里主要以 MySQL、Hive、Impala 为例，其他的可以参考官方文档 [SQLLine 1.0.2](http://sqlline.sourceforge.net/#usage)
+
+
+## 2.1 安装
+```bash
+# 1 创建安装目录
+mkdir /opt/sqlline
+cd /opt/sqlline
+mkdir lib
+
+# 2 下载 SQLLine
+wget https://jaist.dl.sourceforge.net/project/sqlline/sqlline/1.0.2/sqlline-1_0_2.jar
+
+# 3 下载 SQLLine 依赖的 jline
+#  注意：jline版本不能高于 1.1.0，否则会报如下异常
+#  Caused by: java.lang.ClassNotFoundException: jline.Completor
+wget https://repo1.maven.org/maven2/jline/jline/1.0/jline-1.0.jar -P lib/
+
+# 4 下载 MySQL 驱动
+wget https://repo1.maven.org/maven2/mysql/mysql-connector-java/5.1.42/mysql-connector-java-5.1.42.jar -P lib/
+
+# 5 下载 Impala 驱动
+wget https://downloads.cloudera.com/connectors/impala_jdbc_2.5.41.1061.zip -P lib/
+unzip lib/impala_jdbc_2.5.41.1061.zip -d lib/
+unzip lib/2.5.41.1061\ GA/Cloudera_ImpalaJDBC41_2.5.41.zip -d lib/
+rm -rf lib/2.5.41.1061\ GA
+rm -rf lib/*.pdf
+
+# 6 下载 Hive 驱动及其依赖
+wget https://repo1.maven.org/maven2/org/apache/hive/hive-jdbc/1.1.1/hive-jdbc-1.1.1.jar
+wget https://repo1.maven.org/maven2/org/apache/hive/hive-cli/1.1.0/hive-cli-1.1.0.jar
+wget https://repo1.maven.org/maven2/org/apache/hive/hive-service/1.1.0/hive-service-1.1.0.jar
+wget https://repo1.maven.org/maven2/org/apache/hadoop/hadoop-common/2.7.7/hadoop-common-2.7.7.jar
+wget https://repo1.maven.org/maven2/org/apache/hive/hive-common/1.0.0/hive-common-1.0.0.jar
+wget https://repo1.maven.org/maven2/com/google/guava/guava/11.0.2/guava-11.0.2.jar
+
+```
+
+## 2.2 使用
+```bash
+# 1 查看帮助
+java -Djava.ext.dirs=$JAVA_HOME/jre/lib/ext:/opt/sqlline/lib -jar /opt/sqlline/sqlline-1_0_2.jar --help
+Usage: java sqlline.SqlLine
+   -u <database url>               the JDBC URL to connect to
+   -n <username>                   the username to connect as
+   -p <password>                   the password to connect as
+   -d <driver class>               the driver class to use
+   --color=[true/false]            control whether color is used for display
+   --showHeader=[true/false]       show column names in query results
+   --headerInterval=ROWS;          the interval between which heades are displayed
+   --fastConnect=[true/false]      skip building table/column list for tab-completion
+   --autoCommit=[true/false]       enable/disable automatic transaction commit
+   --verbose=[true/false]          show verbose error messages and debug info
+   --showWarnings=[true/false]     display connection warnings
+   --force=[true/false]            continue running script even after errors
+   --maxWidth=MAXWIDTH             the maximum width of the terminal
+   --maxColumnWidth=MAXCOLWIDTH    the maximum width to use when displaying columns
+   --silent=[true/false]           be more silent
+   --autosave=[true/false]         automatically save preferences
+   --outputformat=[table/vertical/csv/tsv]   format mode for result display
+   --isolation=LEVEL               set the transaction isolation level
+   --help                          display this message
+
+
+# 2 连接 Hive
+java -Djava.ext.dirs=$JAVA_HOME/jre/lib/ext:/opt/sqlline/lib -jar /opt/sqlline/sqlline-1_0_2.jar \
+--color=true --autoCommit=false -d "org.apache.hive.jdbc.HiveDriver" \
+-u "jdbc:hive2://cdh3:10000/default" -n impala -p ygbxCDHImpala_iy52yu
+
+# 3 连接 MySQL
+java -Djava.ext.dirs=$JAVA_HOME/jre/lib/ext:/opt/sqlline/lib -jar /opt/sqlline/sqlline-1_0_2.jar \
+--color=true -d "com.mysql.jdbc.Driver" -u "jdbc:mysql://localhost:3306/flink_test" -n scm -p 3UsaTx#bHR
+
+# 4 连接 Impala
+java -Djava.ext.dirs=$JAVA_HOME/jre/lib/ext:/opt/sqlline/lib/ -jar /opt/sqlline/sqlline-1_0_2.jar \
+--color=true --isolation=TRANSACTION_READ_UNCOMMITTED -d "com.cloudera.impala.jdbc41.Driver" \
+-u "jdbc:impala://cdh3:21050/reportmart;UID=hue;AuthMech=3;SSL=0;PWD=hue_123_abc" -n impala -p ygbxCDHImpala_iy52yu
+
+```
+
+```sql
+-- 1 进入 sqlline cli
+-- java -Djava.ext.dirs=$JAVA_HOME/jre/lib/ext:/opt/sqlline/lib -jar /opt/sqlline/sqlline-1_0_2.jar 
+
+-- 2 查看帮助
+sqlline> !help
+!all                Execute the specified SQL against all the current connections
+!autocommit         Set autocommit mode on or off
+!batch              Start or execute a batch of statements
+!brief              Set verbose mode off
+!call               Execute a callable statement
+!close              Close the current connection to the database
+!closeall           Close all current open connections
+!columns            List all the columns for the specified table
+!commit             Commit the current transaction (if autocommit is off)
+!connect            Open a new connection to the database.
+!dbinfo             Give metadata information about the database
+!describe           Describe a table
+!dropall            Drop all tables in the current database
+!exportedkeys       List all the exported keys for the specified table
+!go                 Select the current connection
+!help               Print a summary of command usage
+!history            Display the command history
+!importedkeys       List all the imported keys for the specified table
+!indexes            List all the indexes for the specified table
+!isolation          Set the transaction isolation for this connection
+!list               List the current connections
+!manual             Display the SQLLine manual
+!metadata           Obtain metadata information
+!nativesql          Show the native SQL for the specified statement
+!outputformat       Set the output format for displaying results
+                    (table,vertical,csv,tsv,xmlattrs,xmlelements)
+!primarykeys        List all the primary keys for the specified table
+!procedures         List all the procedures
+!properties         Connect to the database specified in the properties file(s)
+!quit               Exits the program
+!reconnect          Reconnect to the database
+!record             Record all output to the specified file
+!rehash             Fetch table and column names for command completion
+!rollback           Roll back the current transaction (if autocommit is off)
+!run                Run a script from the specified file
+!save               Save the current variabes and aliases
+!scan               Scan for installed JDBC drivers
+!script             Start saving a script to a file
+!set                Set a sqlline variable
+!sql                Execute a SQL command
+!tables             List all the tables in the database
+!typeinfo           Display the type map for the current connection
+!verbose            Set verbose mode on
+
+-- 3 查看当前环境可使用 Driver
+sqlline> !scan
+scan complete in 457ms
+8 driver classes found
+Compliant Version Driver Class
+no        2.5     com.cloudera.impala.jdbc41.Driver
+no        5.1     com.mysql.fabric.jdbc.FabricMySQLDriver
+no        5.1     com.mysql.jdbc.Driver
+no        5.1     com.mysql.jdbc.NonRegisteringDriver
+no        5.1     com.mysql.jdbc.NonRegisteringReplicationDriver
+no        5.1     com.mysql.jdbc.ReplicationDriver
+no        1.1     org.apache.hive.jdbc.HiveDriver
+no        5.1     org.gjt.mm.mysql.Driver
+
+-- 4 执行脚本
+!connect jdbc:hive2://cdh3:10000/default impala ygbxCDHImpala_iy52yu "org.apache.hive.jdbc.HiveDriver"
+!run  /root/show_db.sql
+
+```
+
+## 2.3 SQLLine 1.9 安装
+在上个版本中我们发现无法直接通过指定参数的方式执行 SQL 脚本。因此直接在 Maven 中查看 `sqlline` ，发现最新的为 `sqlline-1.9.0.jar`，这里接着升级为最新
+
+```bash
+# 1 下载 sqlline
+cd /opt/sqlline
+wget https://repo1.maven.org/maven2/sqlline/sqlline/1.9.0/sqlline-1.9.0.jar
+
+# 2 下载 sqlline
+# 通过 Maven 页面的 Compile Dependencies 可知其依赖于新版的 Jline
+mkdir jline
+wget https://repo1.maven.org/maven2/org/jline/jline-reader/3.12.1/jline-reader-3.12.1.jar -P jline/
+wget https://repo1.maven.org/maven2/org/jline/jline-terminal/3.12.1/jline-terminal-3.12.1.jar -P jline/
+wget https://repo1.maven.org/maven2/org/jline/jline-builtins/3.12.1/jline-builtins-3.12.1.jar -P jline/
+
+# 3 查看帮助。此时可以看到支持 -f 指定脚本
+java -Djava.ext.dirs=$JAVA_HOME/jre/lib/ext:/opt/sqlline/lib:/opt/sqlline/jline -jar /opt/sqlline/sqlline-1.9.0.jar --help
+
+```
+
+执行脚本形式
+```bash
+# 2 连接 Hive
+java -Djava.ext.dirs=$JAVA_HOME/jre/lib/ext:/opt/sqlline/lib:/opt/sqlline/jline -jar /opt/sqlline/sqlline-1.9.0.jar \
+--color=true --autoCommit=false --isolation=TRANSACTION_NONE -d "org.apache.hive.jdbc.HiveDriver" \
+-u "jdbc:hive2://cdh3:10000/default" -n impala -p ygbxCDHImpala_iy52yu -f /root/show_db.sql
+
+# 3 连接 MySQL
+java -Djava.ext.dirs=$JAVA_HOME/jre/lib/ext:/opt/sqlline/lib:/opt/sqlline/jline -jar /opt/sqlline/sqlline-1.9.0.jar \
+--color=true -d "com.mysql.jdbc.Driver" -u "jdbc:mysql://localhost:3306/flink_test" -n scm -p 3UsaTx#bHR  --run=/root/show_db.sql
+
+# 4 连接 Impala
+java -Djava.ext.dirs=$JAVA_HOME/jre/lib/ext:/opt/sqlline/lib:/opt/sqlline/jline -jar /opt/sqlline/sqlline-1.9.0.jar \
+--color=true --isolation=TRANSACTION_READ_UNCOMMITTED -d "com.cloudera.impala.jdbc41.Driver" \
+-u "jdbc:impala://cdh3:21050/reportmart;UID=hue;AuthMech=3;SSL=0;PWD=hue_123_abc" -n hue -p hue_123_abc --run=/root/show_db.sql
+
+```
+
+***************
+
+```bash
+# 1 现在 SQLLine 1.9 源码
+wget https://github.com/julianhyde/sqlline/archive/sqlline-1.9.0.tar.gz -P /opt/sqlline/
+
+# 2 解压
+tar -zxf /opt/sqlline/sqlline-1.9.0.tar.gz -C /opt/sqlline/
+
+# 3 编译源码
+cd /opt/sqlline/opt/sqlline/sqlline-sqlline-1.9.0
+mvn package
+
+# 4 编译后的 jar 拷贝到 sqlline 下
+cp /opt/sqlline/sqlline-sqlline-1.9.0/target/sqlline-1.9.0-jar-with-dependencies.jar /opt/sqlline/
+
+# 5 查看帮助
+#  可以看到这个版本支持  -f <file> 和 --run=/path/to/file
+java -jar /opt/sqlline/sqlline-1.9.0-jar-with-dependencies.jar --help
+
+
+
+java -Djava.ext.dirs=$JAVA_HOME/jre/lib/ext:/opt/sqlline/lib:/opt/sqlline/jline -jar /opt/sqlline/sqlline-1.9.0-jar-with-dependencies.jar \
+--color=true -d "com.mysql.jdbc.Driver" -u "jdbc:mysql://localhost:3306/test" -n scm -p 3UsaTx#bHR 
+
+
+# 执行 Hive 脚本
+java -Djava.ext.dirs=$JAVA_HOME/jre/lib/ext:/opt/sqlline/lib -jar /opt/sqlline/sqlline-1.9.0-jar-with-dependencies.jar \
+--color=true --autoCommit=false --isolation=TRANSACTION_READ_UNCOMMITTED -d "org.apache.hive.jdbc.HiveDriver" \
+-u "jdbc:hive2://cdh3:10000/default" -n impala -p ygbxCDHImpala_iy52yu -f /root/show_db.sql
+
+
+
+java -Djava.ext.dirs=$JAVA_HOME/jre/lib/ext:/opt/sqlline/lib:/opt/sqlline/jline -jar /opt/sqlline/sqlline-1.9.0-jar-with-dependencies.jar  \
+--color=true --isolation=TRANSACTION_READ_UNCOMMITTED -d "com.cloudera.impala.jdbc41.Driver" \
+-u "jdbc:impala://cdh3:21050/reportmart;UID=hue;AuthMech=3;SSL=0;PWD=hue_123_abc" -n hue -p hue_123_abc --run=/root/show_db.sql
+
+
+
+```
+
+
 <br/>
 <br/>
 

@@ -1042,6 +1042,36 @@ Wrote minidump to /var/log/impala-minidumps/impalad/b92a42e0-4358-444e-c4ebd9b1-
 ```
 
 
+# 界面化管理工具
+这部分涉及到对用户的运维，我们可以借助第三方开源软件实现的图形化运维管理工具进行，例如：[PHPladpAdmin 管理工具](http://phpldapadmin.sourceforge.net/wiki/index.php/Main_Page)、
+[开源的LDAP浏览器](http://jxplorer.org/)、LDAPAdmin、LAM 等。但是对于Linux系统运维人员，日常的操作几乎都是通过 Linux 命令完成，如果对命令比较熟悉，
+直接使用 OpenLDAP 自带的命令来维护效率会比较高，但是熟悉这些命令时存在难度的，所以这里主要介绍针对用户的常用命令。
+
+## jxplorer
+```bash
+# 1 以 MacOS 系统为例
+wget https://jaist.dl.sourceforge.net/project/jxplorer/jxplorer/version%203.3.1.2/jxplorer-3.3.1.2-osx.zip
+
+# 2 解压后直接脱入到 "应用程序"
+
+# 3 点击图标打开如果启动失败，
+chmod +x /Applications/jxplorer-3.3.1.2.app/Contents/MacOS/jxplorer
+
+
+```
+
+可以匿名访问，配置如下项，点击 确定 可登录
+* 主机： cdh1
+* 基底DN: dc=ygbx,dc=com
+* 层级：匿名
+
+
+用户+密码方式，例如以管理员 root 登陆，其它用户登录无法修改，只能查看
+* 主机： cdh1
+* 基底DN: dc=yore,dc=com
+* 层级：用户+密码
+* 使用者DN：cn=root,dc=yore,dc=com
+* 密码：yore@123
 
 
 
@@ -1053,17 +1083,5 @@ Wrote minidump to /var/log/impala-minidumps/impalad/b92a42e0-4358-444e-c4ebd9b1-
 
 
 
-
-# 连接
-* 指定的字符串必须包含 #UID 的占位符，
-
-
-
-在 Impala 配置中，搜索`LDAP`
-
-
-yRgx7MdBST
-
-ldapsearch -x -b “dc=ygbx,dc=com” -H ldap://127.0.0.1
 
 
