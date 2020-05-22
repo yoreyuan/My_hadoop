@@ -28,6 +28,8 @@ import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
  *
  * </pre>
  *
+ * <a href="https://github.com/apache/hive/blob/master/ql/src/java/org/apache/hadoop/hive/ql/udf/generic/GenericUDFCoalesce.java">GenericUDFCoalesce.java</a>
+ *
  *
  * Created by yore on 2019/5/19 19:46
  */

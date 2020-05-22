@@ -39,12 +39,13 @@
             <groupId>org.apache.hive</groupId>
             <artifactId>hive-exec</artifactId>
             <version>1.2.2</version>
-            <!--<exclusions>
+            <exclusions>
                 <exclusion>
+                    <!-- https://mvnrepository.com/artifact/org.pentaho/pentaho-aggdesigner-algorithm -->
                     <groupId>org.pentaho</groupId>
                     <artifactId>pentaho-aggdesigner-algorithm</artifactId>
                 </exclusion>
-            </exclusions>-->
+            </exclusions>
         </dependency>
 
     </dependencies>

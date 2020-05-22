@@ -2,7 +2,6 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-
     <modelVersion>4.0.0</modelVersion>
     <artifactId>udf-demo</artifactId>
     <groupId>yore</groupId>
@@ -19,10 +18,8 @@
 
         <hadoop.version>3.1.2</hadoop.version>
         <hive.version>3.1.1</hive.version>
-
+        <datax.version>0.0.1-SNAPSHOT</datax.version>
     </properties>
-
-
 
     <dependencies>
         <!-- https://mvnrepository.com/artifact/org.apache.hadoop/hadoop-client -->
@@ -36,18 +33,33 @@
         <dependency>
             <groupId>org.apache.hive</groupId>
             <artifactId>hive-exec</artifactId>
-            <version>3.1.1</version>
+            <version>${hive.version}</version>
             <scope>${provided.scope}</scope>
         </dependency>
 
         <dependency>
             <groupId>org.apache.hive</groupId>
             <artifactId>hive-cli</artifactId>
-            <version>3.1.1</version>
+            <version>${hive.version}</version>
             <scope>${provided.scope}</scope>
         </dependency>
 
+        <dependency>
+            <groupId>yore</groupId>
+            <artifactId>common-utils</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.12</version>
+            <scope>test</scope>
+        </dependency>
+
     </dependencies>
+
+
 
     <build>
         <finalName>zodiac</finalName>
@@ -62,7 +74,45 @@
                     <encoding>${project.build.sourceEncoding}</encoding>
                 </configuration>
             </plugin>
+            <plugin>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <version>2.6</version>
+                <executions>
+                    <execution>
+                        <id>make-assembly</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <finalName>udf_decrypt</finalName>
+                    <descriptorRefs>
+                        <descriptorRef>jar-with-dependencies</descriptorRef>
+                    </descriptorRefs>
+                </configuration>
+            </plugin>
 
+            <plugin>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.20.1</version>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
+            </plugin>
+            <plugin>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>2.4</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>jar-no-fork</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 
