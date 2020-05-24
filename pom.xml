@@ -10,7 +10,7 @@
     <version>1.0-SNAPSHOT</version>
     <modules>
         <module>hive/hive-user-defined-separator</module>
-        <module>hive/hive-garbled-detection</module>
+        <module>hive/udf/hive-garbled-detection</module>
         <module>kudu/kudu_demo</module>
         <module>presto/presto-jdbc</module>
         <module>Impala/Imapla-jdbc</module>

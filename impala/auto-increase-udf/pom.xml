@@ -17,29 +17,29 @@
         <!--<provided.scope>compile</provided.scope>-->
         <provided.scope>provided</provided.scope>
 
-        <hadoop.version>3.0.0+cdh6.2.0</hadoop.version>
         <hive.version>2.1.1+cdh6.2.0</hive.version>
     </properties>
 
     <dependencies>
+        <!-- https://mvnrepository.com/artifact/org.apache.hadoop/hadoop-client -->
         <dependency>
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-client</artifactId>
-            <version>${hadoop.version}</version>
+            <version>3.0.0-cdh6.3.2</version>
             <scope>${provided.scope}</scope>
         </dependency>
 
         <dependency>
             <groupId>org.apache.hive</groupId>
             <artifactId>hive-exec</artifactId>
-            <version>${hive.version}</version>
+            <version>2.1.1-cdh6.3.2</version>
             <scope>${provided.scope}</scope>
         </dependency>
 
         <dependency>
             <groupId>org.apache.hive</groupId>
             <artifactId>hive-cli</artifactId>
-            <version>${hive.version}</version>
+            <version>2.1.1-cdh6.3.2</version>
             <scope>${provided.scope}</scope>
         </dependency>
 
